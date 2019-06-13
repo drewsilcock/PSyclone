@@ -103,9 +103,12 @@ def collect_loop_blocks(node, blocks=None):
                     continue
                 if_blocks = []
                 collect_loop_blocks(child.children[1], if_blocks)
-                child.children[1].view()
                 if if_blocks:
                     blocks += if_blocks
+                if child.else_body:
+                    collect_loop_blocks(child.children[1], if_blocks)
+                    if if_blocks:
+                        blocks += if_blocks
                 continue
 
         state = "collecting loops"
@@ -129,7 +132,7 @@ def is_scalar_parallelisable(var_info):
 
     # Read only scalar variables can be parallelised
     if var_info.is_read_only():
-        return True
+        return (True, "")
 
     all_accesses = var_info.get_all_accesses()
     # The variable is used only once. Either it is a read-only variable,
@@ -137,8 +140,10 @@ def is_scalar_parallelisable(var_info):
     # of the loop (or it is bad code). Read-only access has already been
     # tested above, so it must be a write access here, which prohibits
     # parallelisation.
+    # TODO: should we use lastprivate here?
     if len(all_accesses) == 1:
-        return False
+        return (False, "Variable {0} is only written once" \
+                       .format(var_info.get_var_name()))
 
     # Now we have at least two accesses. Check if there is any READ and WRITE
     # access to the variable at the same location - this would indicate a
@@ -149,18 +154,70 @@ def is_scalar_parallelisable(var_info):
                 all_accesses[i+1].get_access_type() and \
                 all_accesses[i].get_location() == \
                 all_accesses[i+1].get_location():
-            return False
+            return (False, "Variable {0} is used as a reduction." \
+                           .format(var_info.get_var_name()))
 
-    return True
+    return (True, "")
 
-def is_array_parallelisable(var_name, var_info):
+def is_array_parallelisable(loop_variable, var_info):
     '''Tries to determine if the access pattern for a variable
     given in var_info allows parallelisation along the variable
-    var_name.
-    :paramstr var_name: Name of the variable that is parallelised.
-    :param var_info:
+    loop_variable.
+    :paramstr loop_variable: Name of the variable that is parallelised.
+    :param var_info: VariableAccessInfo
+    :return: A pair consisting of a bool, indicating if the variable can \
+        be used in parallel, and a message indicating why it can not \
+        be parallelised.
+    :rtype: (bool, message)
     '''
-    pass
+
+    # If a variable is read-only, it can be parallelised
+    if var_info.is_read_only():
+        return (True, "")
+
+    # Now detect which dimension(s) is/are parallelised, i.e.
+    # which dimension depends on loop_variable. Also collect all
+    # indices that are actually used
+    dimension_index = -1
+    all_indices = []
+    for access in var_info.get_all_accesses():
+        indices = access.get_indices()
+        # Now determine all dimension that depend on the 
+        # parallel variable:
+        for n, index in enumerate(indices):
+            accesses = VariablesAccessInfo()
+            index.reference_accesses(accesses)
+            try:
+                _ = accesses.get_varinfo(loop_variable)
+                # This array would be parallelised across different
+                # indices (a(i,j), and a(j,i) ):
+                if dimension_index >-1 and dimension_index !=n:
+                    return (False, "Variable '{0}' is using loop variable "\
+                                   "{1} in index {2} and {3}."\
+                                   .format(var_info.get_var_name(),
+                                           loop_variable, dimension_index, n))
+                else:
+                    dimension_index = n
+                all_indices.append(index)
+            except KeyError:
+                # This dimension does not use the parallel
+                # variable
+                continue
+
+    # Now we have confirmed that all parallel accesses to the variable
+    # are using the same dimension.
+    # If all accesses use the same index, then the loop can be parallelised:
+    # (this could be tested above, but this way it is a bit clearer for now)
+    # TODO: convert the indices back to Fortran!
+    first_index = all_indices[0]
+    for index in all_indices[1:]:
+        if not first_index.math_equal(index):
+            return (False, "Variable {0} is using index {1} and {2} and can "\
+                           "therefore not be parallelised"\
+                           .format(var_info.get_var_name(), str(first_index),
+                                   str(index)))
+    return (True, "")
+
 
 def can_loop_be_parallelised(loop, loop_variable=None):
     '''Returns true if the loop can be parallelised along the
@@ -172,7 +229,6 @@ def can_loop_be_parallelised(loop, loop_variable=None):
     loop.reference_accesses(var_accesses)
 
     loop_vars = [l.variable_name for l in loop.walk([loop], Loop)]
-    print(loop_vars)
 
     for var_name in var_accesses.get_all_vars():
         # Ignore all loop variables - they look like reductions because of
@@ -181,13 +237,13 @@ def can_loop_be_parallelised(loop, loop_variable=None):
             continue
 
         var_info = var_accesses.get_varinfo(var_name)
-        print("var_name", var_name, var_info.is_array(), var_info.get_all_accesses()[0].get_indices())
         if var_info.is_array():
-            #print(var_name, is_array_parallelisable(var_info))
-            pass
+            par_able, message = is_array_parallelisable(loop_variable, var_info)
         else:
             # Handle scalar variable
-            print(var_name, is_scalar_parallelisable(var_info))
+            par_able, message = is_scalar_parallelisable(var_info)
+        if not par_able:
+            print("Loop not parallelisable: {0}".format(message))
 
     return True
 
@@ -244,5 +300,5 @@ def trans(psy):
     # psy.invokes.get('step2d_tile').schedule = sched
 
     # sched.view()
-    print(psy.gen)
+    #print(psy.gen)
     return psy

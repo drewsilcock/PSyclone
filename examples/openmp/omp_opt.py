@@ -56,8 +56,13 @@ def is_blockable(node):
     # not prevent a larger omp parallel block from being created.
     if isinstance(node, Assignment):
         return True
+
     if isinstance(node, NemoLoop):
-        return node.loop_type == "lat"
+        if node.loop_type != "lat":
+            return False
+        # Check if the loop is at least nested:
+        nested_loops = node.walk(node.children, Loop)
+        return nested_loops != []
 
     # Likely a function call. This must be outside of an omp block, since
     # the called function itself might be omp parallelised.

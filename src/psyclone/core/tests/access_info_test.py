@@ -59,10 +59,13 @@ def test_access_info():
     assert access_info.get_location() == 12
     assert access_info.get_indices() is None
 
+    # In general the indices should not be strings, but it simplifies
+    # the tests here.
     access_info = AccessInfo(AccessType.UNKNOWN, 12, ["i", "j"])
     assert access_info.get_access_type() == AccessType.UNKNOWN
     assert access_info.get_location() == 12
     assert access_info.get_indices() == ["i", "j"]
+    assert str(access_info) == "UNKNOWN(12)"
 
 
 # -----------------------------------------------------------------------------
@@ -82,6 +85,18 @@ def test_variable_access_info():
     vai.change_read_to_write()
     assert not vai.is_read()
     assert vai.is_written()
+    assert not vai.is_array()
+
+    array_info = VariableAccessInfo("array")
+    array_info.add_access(AccessType.READ, 1, ["1"])
+    assert array_info.is_read_only()
+    array_info.add_access(AccessType.READ, 2, ["1"])
+    assert array_info.is_read_only()
+    array_info.add_access(AccessType.WRITE, 4, ["1"])
+    assert not array_info.is_read_only()
+    assert array_info.is_read()
+    assert array_info.is_array()
+    assert str(array_info) == "READ(1),READ(2),WRITE(4)"
 
 
 # -----------------------------------------------------------------------------
@@ -112,6 +127,7 @@ def test_variables_access_info():
     var_accesses2.add_access("new_var", AccessType.READ)
     var_accesses2.add_access("written", AccessType.READ)
     new_var_accesses = var_accesses2.get_varinfo("new_var").get_all_accesses()
+    assert var_accesses2.get_location() == 999
     assert new_var_accesses[0].get_location() == 999
 
     # Now merge the new instance with the previous instance:

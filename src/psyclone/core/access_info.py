@@ -70,6 +70,9 @@ class AccessInfo(object):
         else:
             self._indices = None
 
+    def __str__(self):
+        return "{0}({1})".format(self._access_type, self._location)
+
     def change_read_to_write(self):
         '''This changes the access mode from READ to WRITE.
         This is used for processing assignment statements,
@@ -113,11 +116,24 @@ class VariableAccessInfo(object):
         # This is the list of AccessInfo instances for this variable.
         self._accesses = []
 
+    def __str__(self):
+        '''Converts this object into a string with the format:
+        WRITE(2),WRITE(3),READ(5)'''
+        return ",".join([str(access) for access in self._accesses])
+
     def get_var_name(self):
         ''':returns: the name of the variable whose access info is managed.
         :rtype: str
         '''
         return self._var_name
+
+    def is_array(self):
+        ''':returns: True if all accesses to this variable involve indices.
+        :rtpe: bool'''
+        for access in self._accesses:
+            if not access.get_indices():
+                return False
+        return True
 
     def is_written(self):
         '''Checks if the specified variable name is at least written once.
@@ -139,6 +155,16 @@ class VariableAccessInfo(object):
             if access_info.get_access_type() == AccessType.READ:
                 return True
         return False
+
+    def is_read_only(self):
+        '''Checks if the specified variable name is always read.
+        :returns: true if the specified variable name is read only.
+        :rtype: bool
+        '''
+        for access_info in self._accesses:
+            if access_info.get_access_type() != AccessType.READ:
+                return False
+        return True
 
     def get_all_accesses(self):
         ''':returns: a list with all AccessInfo data for this variable.

@@ -282,22 +282,18 @@ def create_all_omp_directives(statements):
 def trans(psy):
     print("Invokes found:")
     print(psy.invokes.names)
-    sched = psy.invokes.get('step2d_tile').schedule
 
-    # First step: split the subroutine into blocks, each one consisting
-    # of loops, which are then separated by other statements (e.g. calls)
-    blocks = []
-    collect_loop_blocks(sched, blocks)
-    # Now create individual OMP parallel directives around those blocks:
-    for statements in blocks:
-        create_all_omp_directives(statements)
-    #create_all_omp_directives(blocks[0])
-    #create_all_omp_directives(blocks[1])
-    #create_all_omp_directives(blocks[2])
-    #create_all_omp_directives(blocks[3])
-    #create_all_omp_directives(blocks[4])
 
-    # psy.invokes.get('step2d_tile').schedule = sched
+    for subroutine in psy.invokes.names:
+        sched = psy.invokes.get(subroutine).schedule
+
+        # First step: split the subroutine into blocks, each one consisting
+        # of loops, which are then separated by other statements (e.g. calls)
+        blocks = []
+        collect_loop_blocks(sched, blocks)
+        # Now create individual OMP parallel directives around those blocks:
+        for statements in blocks:
+            create_all_omp_directives(statements)
 
     # sched.view()
     #print(psy.gen)

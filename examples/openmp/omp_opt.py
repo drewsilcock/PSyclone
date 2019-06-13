@@ -94,12 +94,20 @@ def collect_loop_blocks(node, blocks=None):
     :param node: Subtree to analyse.
     :param blocks:
     '''
-
     state = "find beginning"
     loops = []
     for child in node.children:
-        if state == "find beginning" and not is_blockable(child):
-            continue
+        if state == "find beginning":
+            if not is_blockable(child):
+                if not isinstance(child, IfBlock):
+                    continue
+                if_blocks = []
+                collect_loop_blocks(child.children[1], if_blocks)
+                child.children[1].view()
+                if if_blocks:
+                    blocks += if_blocks
+                continue
+
         state = "collecting loops"
         if state == "collecting loops" and \
                 not is_blockable(child):

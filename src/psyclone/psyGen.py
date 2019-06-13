@@ -42,6 +42,7 @@
 from __future__ import print_function, absolute_import
 from enum import Enum
 import abc
+import re
 import six
 from psyclone.configuration import Config
 from psyclone.core.access_info import VariablesAccessInfo, AccessType
@@ -7054,8 +7055,25 @@ class Assignment(Node):
         self.children[0].reference_accesses(accesses_left)
 
         # Now change the (one) access to the assigned variable to be WRITE:
-        var_info = accesses_left.get_varinfo(self.children[0].name)
-        var_info.change_read_to_write()
+        if isinstance(self.children[0], CodeBlock):
+            # TODO: Assignment to user defined type, not supported yet
+            # Here an absolute hack to get at least some information out
+            # from the AST - though indices are just strings, which will likely
+            # cause problems later as well.
+            if isinstance(self.children[0], CodeBlock):
+                name =  str(self.children[0]._ast)
+                # A regular expression that tries to find the last parenthesis
+                # pair in the name ("a(i,j)" --> "(i,j)")
+                ind = re.search("\([^\(]+\)$", name)
+                if ind:
+                    name = name.replace(ind.group(0), "")
+                    accesses_left.add_access(name, AccessType.WRITE,
+                                             ind.group(0))
+                else:
+                    accesses_left.add_access(name, AccessType.WRITE)
+        else:
+            var_info = accesses_left.get_varinfo(self.children[0].name)
+            var_info.change_read_to_write()
 
         # Merge the data (that shows now WRITE for the variable) with the
         # parameter to this function:

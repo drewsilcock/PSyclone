@@ -159,7 +159,8 @@ def is_array_parallelisable(var_name, var_info):
     var_name.
     :paramstr var_name: Name of the variable that is parallelised.
     :param var_info:
-
+    '''
+    pass
 
 def can_loop_be_parallelised(loop, loop_variable=None):
     '''Returns true if the loop can be parallelised along the
@@ -186,7 +187,7 @@ def can_loop_be_parallelised(loop, loop_variable=None):
             pass
         else:
             # Handle scalar variable
-            print(var_name, is_scalar_parallelisable(var_name, var_info))
+            print(var_name, is_scalar_parallelisable(var_info))
 
     return True
 

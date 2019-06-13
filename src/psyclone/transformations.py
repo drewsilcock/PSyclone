@@ -114,14 +114,14 @@ class RegionTrans(Transformation):
             prev_position = child.position
 
         # Check that the proposed region contains only supported node types
-        #for child in node_list:
-        #    flat_list = [item for item in child.walk([child], object)
-        #                 if not isinstance(item, Schedule)]
-        #    for item in flat_list:
-        #        if not isinstance(item, self.valid_node_types):
-        #            raise TransformationError(
-        #                "Nodes of type '{0}' cannot be enclosed by a {1} "
-        #                "transformation".format(type(item), self.name))
+        for child in node_list:
+            flat_list = [item for item in child.walk([child], object)
+                         if not isinstance(item, Schedule)]
+            for item in flat_list:
+                if not isinstance(item, self.valid_node_types):
+                    raise TransformationError(
+                        "Nodes of type '{0}' cannot be enclosed by a {1} "
+                        "transformation".format(type(item), self.name))
 
         # Sanity check that we've not been passed the condition part of
         # an If statement (which is child 0)

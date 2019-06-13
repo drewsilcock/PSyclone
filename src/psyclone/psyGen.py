@@ -963,6 +963,27 @@ class Node(object):
     def __str__(self):
         raise NotImplementedError("Please implement me")
 
+    def math_equal(self, other):
+        '''Returns true if the self has the same results as other. The
+        implementation in the base class just confirms that the type is the
+        same, and the number of children as well.
+
+        :param other: The node to compare self with.
+        :type other: py:class:`psyclone.psyGen.Node`.
+        '''
+
+        # pylint: disable=unidiomatic-typecheck
+        if type(self) != type(other):
+            return False
+
+        if len(self._children) != len(other._children):
+            return False
+
+        for i, entity in enumerate(self._children):
+            if not entity.math_equal(other.children[i]):
+                return False
+        return True
+
     @property
     def ast(self):
         '''
@@ -2711,7 +2732,7 @@ class OMPDoDirective(OMPDirective):
             raise GenerationError(
                 "An OpenMP DO can only be applied to a single loop "
                 "but this Node has {0} children: {1}".
-                    format(len(self._children), self._children))
+                format(len(self._children), self._children))
 
         # Find the locations in which we must insert the begin/end
         # directives...
@@ -7061,10 +7082,10 @@ class Assignment(Node):
             # from the AST - though indices are just strings, which will likely
             # cause problems later as well.
             if isinstance(self.children[0], CodeBlock):
-                name =  str(self.children[0]._ast)
+                name = str(self.children[0].ast)
                 # A regular expression that tries to find the last parenthesis
                 # pair in the name ("a(i,j)" --> "(i,j)")
-                ind = re.search("\([^\(]+\)$", name)
+                ind = re.search(r"\([^\(]+\)$", name)
                 if ind:
                     name = name.replace(ind.group(0), "")
                     accesses_left.add_access(name, AccessType.WRITE,
@@ -7144,6 +7165,15 @@ class Reference(Node):
 
     def __str__(self):
         return "Reference[name:'" + self._reference + "']\n"
+
+    def math_equal(self, other):
+        '''Returns true if the self has the same results as other.
+        :param other: The node to compare self with.
+        :type other: py:class:`psyclone.psyGen.Node`.
+        '''
+        if not super(Reference, self).math_equal(other):
+            return False
+        return self.name == other.name
 
     def reference_accesses(self, var_accesses):
         '''Get all variable access information. All accesses are marked as
@@ -7326,6 +7356,30 @@ class BinaryOperation(Node):
 
         self._operator = operator
 
+    def math_equal(self, other):
+        '''Returns true if the self has the same results as other.
+        :param other: The node to compare self with.
+        :type other: py:class:`psyclone.psyGen.Node`.
+        '''
+
+        if not super(BinaryOperation, self).math_equal(other):
+            # Support some commutative law, unfortunately we now need
+            # to repeat some tests already done in super()
+            # pylint: disable=unidiomatic-typecheck
+            if type(self) != type(other):
+                return False
+            # pylint: disable=protected-access
+            if self._operator != other._operator:
+                return False
+            if self._operator not in [self.Operator.ADD, self.Operator.MUL,
+                                      self.Operator.AND, self.Operator.OR,
+                                      self.Operator.EQ]:
+                return False
+            return self._children[0].math_equal(other.children[1]) and \
+                self._children[1].math_equal(other.children[0])
+        # pylint: disable=protected-access
+        return self._operator == other._operator
+
     @property
     def coloured_text(self):
         '''
@@ -7488,7 +7542,7 @@ class Array(Reference):
 
         if list_indices:
             var_info = var_accesses.get_varinfo(self._reference)
-            var_info.get_all_accesses()[0].set_indices(list_indices)
+            var_info.get_all_accesses()[-1].set_indices(list_indices)
 
     def gen_c_code(self, indent=0):
         '''
@@ -7553,6 +7607,17 @@ class Literal(Node):
         '''
         print(self.indent(indent) + self.coloured_text + "["
               + "value:'"+self._value + "']")
+
+    def math_equal(self, other):
+        '''Returns true if the self has the same results as other.
+        :param other: The node to compare self with.
+        :type other: py:class:`psyclone.psyGen.Node`.
+        '''
+        if not super(Literal, self).math_equal(other):
+            return False
+
+        # pylint: disable=protected-access
+        return self._value == other._value
 
     def __str__(self):
         return "Literal[value:'" + self._value + "']\n"

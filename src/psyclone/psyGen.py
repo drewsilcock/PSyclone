@@ -2491,11 +2491,9 @@ class OMPParallelDirective(OMPDirective):
             if accesses[0].get_indices() is not None:
                 continue
 
-            # If a variable is only accesses once, it is either an error
+            # If a variable is only accessed once, it is either an error
             # or a shared variable:
             if len(accesses) == 1:
-                if accesses[0].get_access_type() == AccessType.WRITE:
-                    print("Warning: written but not used", var_name)
                 continue
 
             # We have at least two accesses. If the first one is a write,
@@ -7069,6 +7067,9 @@ class Assignment(Node):
             :py:class:`psyclone.core.access_info.VariablesAccessInfo`
         '''
 
+        # First handle the RHS, since the read happens before the write
+        self.children[1].reference_accesses(var_accesses)
+
         # It is important that a new instance is used to handle the LHS,
         # since an assert in 'change_read_to_write' makes sure that there
         # is only one access to the variable!
@@ -7099,7 +7100,6 @@ class Assignment(Node):
         # Merge the data (that shows now WRITE for the variable) with the
         # parameter to this function:
         var_accesses.merge(accesses_left)
-        self.children[1].reference_accesses(var_accesses)
         var_accesses.next_location()
 
     def gen_c_code(self, indent=0):

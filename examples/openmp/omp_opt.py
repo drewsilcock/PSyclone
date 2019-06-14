@@ -39,6 +39,7 @@ from fparser.two.utils import walk_ast
 
 from psyclone.nemo import NemoKern, NemoLoop
 from psyclone.core.access_info import VariablesAccessInfo
+from psyclone.core.access_type import AccessType
 from psyclone.psyGen import Assignment, CodeBlock, IfBlock, Loop, TransInfo
 from psyclone.transformations import OMPLoopTrans, OMPParallelTrans, \
     ProfileRegionTrans
@@ -145,19 +146,16 @@ def is_scalar_parallelisable(var_info):
         return (False, "Variable {0} is only written once" \
                        .format(var_info.get_var_name()))
 
-    # Now we have at least two accesses. Check if there is any READ and WRITE
-    # access to the variable at the same location - this would indicate a
-    # reduction, which atm can not be parallelised. This relies on the
-    # accesses sorted by location!
-    for i in range(len(all_accesses)-1):
-        if all_accesses[i].get_access_type() != \
-                all_accesses[i+1].get_access_type() and \
-                all_accesses[i].get_location() == \
-                all_accesses[i+1].get_location():
-            return (False, "Variable {0} is used as a reduction." \
-                           .format(var_info.get_var_name()))
+    # Now we have at least two accesses. If the first access is a WRITE,
+    # then the variable is not used in a reduction. This relies on sorting
+    # the accesses by location.
+    if all_accesses[0].get_access_type()==AccessType.WRITE:
+        return (True, "")
 
-    return (True, "")
+    # Otherwise there is a read first, which would indicate that this loop
+    # is a reduction, which is not supported atm.
+    return (False, "Variable {0} read first, which indicates a reduction." \
+                   .format(var_info.get_var_name()))
 
 def is_array_parallelisable(loop_variable, var_info):
     '''Tries to determine if the access pattern for a variable
@@ -232,7 +230,7 @@ def can_loop_be_parallelised(loop, loop_variable=None):
 
     for var_name in var_accesses.get_all_vars():
         # Ignore all loop variables - they look like reductions because of
-        # the write-read access in the loop/
+        # the write-read access in the loop:
         if var_name in loop_vars:
             continue
 
@@ -274,6 +272,10 @@ def create_all_omp_directives(statements):
     while statements and isinstance(statements[-1], Assignment):
         del statements[-1]
 
+    # If there were only assignments in a block, don't bother parallelising it
+    if statements == []:
+        return
+
     parallel = OMPParallelTrans()
     sched, _ = parallel.apply(statements)
     create_omp(statements)
@@ -293,7 +295,8 @@ def trans(psy):
         collect_loop_blocks(sched, blocks)
         # Now create individual OMP parallel directives around those blocks:
         for statements in blocks:
-            create_all_omp_directives(statements)
+            if statements != []:
+                create_all_omp_directives(statements)
 
     # sched.view()
     #print(psy.gen)

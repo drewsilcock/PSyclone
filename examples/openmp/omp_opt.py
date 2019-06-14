@@ -35,14 +35,13 @@
 # Authors: Joerg Henrichs, Bureau of Meteorology
 
 
-from fparser.two.utils import walk_ast
+from __future__ import print_function, absolute_import
 
-from psyclone.nemo import NemoKern, NemoLoop
+from psyclone.nemo import NemoLoop
 from psyclone.core.access_info import VariablesAccessInfo
 from psyclone.core.access_type import AccessType
-from psyclone.psyGen import Assignment, CodeBlock, IfBlock, Loop, TransInfo
-from psyclone.transformations import OMPLoopTrans, OMPParallelTrans, \
-    ProfileRegionTrans
+from psyclone.psyGen import Assignment, CodeBlock, IfBlock, Loop
+from psyclone.transformations import OMPLoopTrans, OMPParallelTrans
 
 
 def is_blockable(node):
@@ -55,6 +54,7 @@ def is_blockable(node):
     # Loops and Assignments can be executed in parallel (if a loop can
     # not be parallelised, we can add a omp serial directive, but it does
     # not prevent a larger omp parallel block from being created.
+    # pylint: disable=too-many-return-statements
     if isinstance(node, Assignment):
         return True
 
@@ -116,7 +116,7 @@ def collect_loop_blocks(node, blocks=None):
         if state == "collecting loops" and \
                 not is_blockable(child):
             state = "find beginning"
-            if len(loops) > 0:
+            if loops:
                 blocks.append(loops)
             loops = []
             continue
@@ -143,19 +143,20 @@ def is_scalar_parallelisable(var_info):
     # parallelisation.
     # TODO: should we use lastprivate here?
     if len(all_accesses) == 1:
-        return (False, "Variable {0} is only written once" \
-                       .format(var_info.get_var_name()))
+        return (False, "Variable {0} is only written once"
+                .format(var_info.get_var_name()))
 
     # Now we have at least two accesses. If the first access is a WRITE,
     # then the variable is not used in a reduction. This relies on sorting
     # the accesses by location.
-    if all_accesses[0].get_access_type()==AccessType.WRITE:
+    if all_accesses[0].get_access_type() == AccessType.WRITE:
         return (True, "")
 
     # Otherwise there is a read first, which would indicate that this loop
     # is a reduction, which is not supported atm.
-    return (False, "Variable {0} read first, which indicates a reduction." \
-                   .format(var_info.get_var_name()))
+    return (False, "Variable {0} read first, which indicates a reduction."
+            .format(var_info.get_var_name()))
+
 
 def is_array_parallelisable(loop_variable, var_info):
     '''Tries to determine if the access pattern for a variable
@@ -180,7 +181,7 @@ def is_array_parallelisable(loop_variable, var_info):
     all_indices = []
     for access in var_info.get_all_accesses():
         indices = access.get_indices()
-        # Now determine all dimension that depend on the 
+        # Now determine all dimension that depend on the
         # parallel variable:
         for n, index in enumerate(indices):
             accesses = VariablesAccessInfo()
@@ -189,11 +190,11 @@ def is_array_parallelisable(loop_variable, var_info):
                 _ = accesses.get_varinfo(loop_variable)
                 # This array would be parallelised across different
                 # indices (a(i,j), and a(j,i) ):
-                if dimension_index >-1 and dimension_index !=n:
-                    return (False, "Variable '{0}' is using loop variable "\
-                                   "{1} in index {2} and {3}."\
-                                   .format(var_info.get_var_name(),
-                                           loop_variable, dimension_index, n))
+                if dimension_index > -1 and dimension_index != n:
+                    return (False, "Variable '{0}' is using loop variable "
+                                   "{1} in index {2} and {3}."
+                            .format(var_info.get_var_name(),
+                                    loop_variable, dimension_index, n))
                 else:
                     dimension_index = n
                 all_indices.append(index)
@@ -210,10 +211,10 @@ def is_array_parallelisable(loop_variable, var_info):
     first_index = all_indices[0]
     for index in all_indices[1:]:
         if not first_index.math_equal(index):
-            return (False, "Variable {0} is using index {1} and {2} and can "\
-                           "therefore not be parallelised"\
-                           .format(var_info.get_var_name(), str(first_index),
-                                   str(index)))
+            return (False, "Variable {0} is using index {1} and {2} and can "
+                           "therefore not be parallelised"
+                    .format(var_info.get_var_name(), str(first_index),
+                            str(index)))
     return (True, "")
 
 
@@ -236,7 +237,8 @@ def can_loop_be_parallelised(loop, loop_variable=None):
 
         var_info = var_accesses.get_varinfo(var_name)
         if var_info.is_array():
-            par_able, message = is_array_parallelisable(loop_variable, var_info)
+            par_able, message = is_array_parallelisable(loop_variable,
+                                                        var_info)
         else:
             # Handle scalar variable
             par_able, message = is_scalar_parallelisable(var_info)
@@ -263,11 +265,6 @@ def create_omp(statements):
 
 
 def create_all_omp_directives(statements):
-    # Any assignment statements at the beginning and end of the statement list
-    # can be ignored, they do not need to be inside the omp block.
-
-    #while statements and isinstance(statements[0], Assignment):
-    #    del statements[0]
 
     while statements and isinstance(statements[-1], Assignment):
         del statements[-1]
@@ -277,14 +274,13 @@ def create_all_omp_directives(statements):
         return
 
     parallel = OMPParallelTrans()
-    sched, _ = parallel.apply(statements)
+    _, _ = parallel.apply(statements)
     create_omp(statements)
 
 
 def trans(psy):
     print("Invokes found:")
     print(psy.invokes.names)
-
 
     for subroutine in psy.invokes.names:
         sched = psy.invokes.get(subroutine).schedule
@@ -299,5 +295,4 @@ def trans(psy):
                 create_all_omp_directives(statements)
 
     # sched.view()
-    #print(psy.gen)
     return psy

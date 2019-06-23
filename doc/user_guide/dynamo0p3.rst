@@ -373,9 +373,9 @@ types.
     (see :ref:`dynamo0.3-function-space`).
     If more than one argument is modified then the iteration space is taken
     to be the largest required by any of those arguments. e.g. if a Kernel
-    writes to two fields, the first on W3 (discontinuous) and the
-    second on W1 (continuous), then the iteration space of that Kernel
-    will be determined by the field on the continuous space.
+    writes to two fields, the first on ``W3`` (discontinuous) and the
+    second on ``W1`` (continuous), then the iteration space of that
+    Kernel will be determined by the field on the continuous space.
 
  3) If the function space of the modified argument(s) cannot be
     determined then they are assumed to be continuous. This is
@@ -655,9 +655,9 @@ operator to a field might look like:
        /)
 
 In some cases a Kernel may be written so that it works for fields and/or
-operators from any type of w2 space i.e. one of ``w2``, ``w2h`` or
-``w2v``. In this case the metadata should be specified as being
-``any_w2``.
+operators from any type of ``w2`` space i.e. one of ``w2``, ``w2h``,
+``w2v``, ``w2broken`` or ``w2trace``. In this case the metadata should
+be specified as being ``any_w2``.
 
 .. Warning:: in the current implementation it is assumed that all
              fields and/or operators specifying ``any_w2`` within a
@@ -699,8 +699,9 @@ need not be on the same space.
 .. note:: A ``GH_FIELD`` argument that specifies ``GH_WRITE`` or
           ``GH_READWRITE`` as its access pattern must be a discontinuous
           function in the horizontal (see :ref:`dynamo0.3-valid-access`
-          below). That means it must belong to ``w3``, ``wtheta`` or
-          ``w2v`` function spaces (see :ref:`dynamo0.3-function-space`).
+          below). That means it must belong to ``w3``, ``wtheta``,
+          ``w2v`` or ``w2broken`` function spaces
+          (see :ref:`dynamo0.3-function-space`).
           A ``GH_FIELD`` that specifies ``GH_INC`` as its access
           pattern may be continuous in the vertical (and discontinuous
           in the horizontal), continuous in the horizontal (and
@@ -821,15 +822,27 @@ component-wise vector variables are:
 
 * ``w2h`` is the space of vector functions based on the horizontal
   part of ``w2``, continuous in the horizontal and discontinuous
-  in the vertical.
+  in the vertical;
+
+* ``w2broken`` is the space of vector functions, locally identical
+  to the velocity space ``w2``. However, dofs are topologically
+  discontinuous in all directions despite their placement on cell
+  faces;
+
+* ``w2trace`` is the space of scalar functions, resulting from
+  taking the ``trace`` of a ``w2`` element and defined only on the
+  faces. Dofs are shared between faces, hence making this space
+  fully continuous.
 
 Since the Dynamo0.3 API operates on columns of data, function spaces
 are categorised as continuous or discontinuous with regard to their
 horizontal continuity.
 
-* **Continuous** function spaces are ``w0``, ``w1``, ``w2`` and ``w2h``;
+* **Continuous** function spaces are ``w0``, ``w1``, ``w2``, ``w2h``
+  and ``w2trace``;
 
-* **Discontinuous** function spaces are ``w3``, ``wtheta`` and ``w2v``.
+* **Discontinuous** function spaces are ``w3``, ``wtheta``, ``w2v``
+  and ``w2broken``.
 
 Two additonal function space metadata descriptors as mentioned in
 sections above are:
@@ -1010,7 +1023,9 @@ the rest are read-only. They may also have read-only scalar arguments, e.g.:
         arg_type(GH_COLUMNWISE_OPERATOR, GH_READ, ANY_SPACE_1, ANY_SPACE_2),  &
         arg_type(GH_REAL, GH_READ) /)
 
-.. note:: The order with which arguments are specified in metadata for CMA kernels does not affect the process of identifying the type of kernel (whether it is assembly, matrix-matrix etc.)
+.. note:: The order with which arguments are specified in metadata for CMA
+          kernels does not affect the process of identifying the type of kernel
+          (whether it is assembly, matrix-matrix etc.)
 
 meta_funcs
 ##########
@@ -1187,7 +1202,19 @@ rules, along with PSyclone's naming conventions, are:
 	      Each of these arrays are of rank 3 with extent (``dimension``, ``number_of_dofs``,
 	      ``ndf_<target_function_space>``). The name of the argument is ``"basis_"<field_function_space>"_on_"<target_function_space>`` or ``"diff_basis_"<field_function_space>"_on_"<target_function_space>``, as appropriate.
 	      
-           where ``dimension`` is 1 or 3 and depends upon the function space and whether or not it is a basis or a differential basis function. For the former it is (w0=1, w1=3, w2=3, w3=1, wtheta=1, w2h=3, w2v=3, any_w2=3). For the latter it is (w0=3, w1=3, w2=1, w3=3, wtheta=3, w2h=1, w2v=1, any_w2=3). ``number_of_dofs`` is the number of degrees of freedom (dofs) associated with the function space and ``np_*`` are the number of points to be evaluated: i) ``*_xyz`` in all directions (3D); ii) ``*_xy`` in the horizontal plane (2D); iii) ``*_x, *_y`` in the horizontal (1D); and iv) ``*_z`` in the vertical (1D).
+           Here ``dimension`` is 1 or 3 and depends upon the function space
+           and whether or not it is a basis or a differential basis function.
+           For the former it is
+           (w0=1, w1=3, w2=3, w3=1, wtheta=1, w2h=3, w2v=3, w2broken=3, w2trace=1, any_w2=3).
+           For the latter it is
+           (w0=3, w1=3, w2=1, w3=3, wtheta=3, w2h=1, w2v=1, w2broken=1, w2trace=3, any_w2=3).
+           ``number_of_dofs`` is the number of degrees of freedom (dofs)
+           associated with the function space and ``np_*`` are the number
+           of points to be evaluated:
+           i) ``*_xyz`` in all directions (3D);
+           ii) ``*_xy`` in the horizontal plane (2D);
+           iii) ``*_x, *_y`` in the horizontal (1D);
+           and iv) ``*_z`` in the vertical (1D).
 
         2) If it is an orientation array, include the associated argument. The argument is an integer array with intent ``in``. There is one dimension of size the local degrees of freedom for the function space. The name of the array is ``"orientation_"<field_function_space>``.
 
@@ -2008,8 +2035,8 @@ infrastructure.
 Up to and including version 1.4.0 of PSyclone, boundary conditions
 were applied automatically after a call to ``matrix_vector_type`` if
 the field arguments were on a vector function space (one of ``w1``,
-``w2``, ``w2h`` or ``w2v``). With the subsequent introduction of the
-ability to apply boundary conditions to operators this functionality
+``w2``, ``w2h``, ``w2v`` or ``w2broken``). With the subsequent introduction
+of the ability to apply boundary conditions to operators this functionality
 is no longer required and has been removed.
 
 Example ``eg4`` in the ``examples/dynamo`` directory includes a call

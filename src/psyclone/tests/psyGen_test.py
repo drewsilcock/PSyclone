@@ -4576,7 +4576,7 @@ def testfp2astproc_handling_array_product(f2008_parser):
     fp2node = Execution_Part.match(reader)
     processor.process_nodes(fake_parent, [fp2node[0][0]], None)
     fake_parent.children[0].view()
-    assert not fake_parent.walk(fake_parent.children, CodeBlock)
+    assert not fake_parent.walk(CodeBlock)
 
 
 def test_fparser2astprocessor_handling_if_stmt(f2008_parser):

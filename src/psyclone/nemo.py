@@ -31,7 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
-# Authors R. W. Ford, A. R. Porter and S. Siso, STFC Daresbury Lab
+# Authors: R. W. Ford, A. R. Porter and S. Siso, STFC Daresbury Lab
+# Modified work Copyright (c) 2019 by J. Henrichs, Bureau of Meteorology
 
 '''This module implements the PSyclone NEMO API by specialising
    the required base classes for both code generation (PSy, Invokes,
@@ -148,9 +149,8 @@ class NemoInvokes(Invokes):
     '''
     def __init__(self, ast):
         # pylint: disable=super-init-not-called, too-many-locals
-        from fparser.two.Fortran2003 import Main_Program, Program_Stmt, \
-            Subroutine_Subprogram, Function_Subprogram, Function_Stmt, \
-            Subroutine_Stmt, Name
+        from fparser.two.Fortran2003 import Main_Program,  \
+            Subroutine_Subprogram, Function_Subprogram, Function_Stmt, Name
 
         self.invoke_map = {}
         self.invoke_list = []
@@ -169,16 +169,15 @@ class NemoInvokes(Invokes):
 
         # Analyse each routine we've found
         for subroutine in routines:
-            # Get the name of this (sub)routine
-            substmt = walk_ast(subroutine.content,
-                               [Subroutine_Stmt, Function_Stmt, Program_Stmt])
-            if isinstance(substmt[0], Function_Stmt):
-                for item in substmt[0].items:
+            # Get the name of this subroutine, program or function
+            substmt = subroutine.content[0]
+            if isinstance(substmt, Function_Stmt):
+                for item in substmt.items:
                     if isinstance(item, Name):
                         sub_name = str(item)
                         break
             else:
-                sub_name = str(substmt[0].get_name())
+                sub_name = str(substmt.get_name())
 
             my_invoke = NemoInvoke(subroutine, name=sub_name)
             self.invoke_map[sub_name] = my_invoke
@@ -369,7 +368,10 @@ class NemoKern(CodedKern):
     def reference_accesses(self, var_accesses):
         '''Get all variable access information. It calls the corresponding
         kernel schedule function.
-        :param var_accesses: \
+
+        :param var_accesses: VariablesAccessInfo that stores the information\
+            about variable accesses.
+        :type var_accesses: \
             :py:class:`psyclone.core.access_info.VariablesAccessInfo`
         '''
         self._kern_schedule.reference_accesses(var_accesses)
@@ -497,10 +499,13 @@ class NemoLoop(Loop, NemoFparser2ASTProcessor):
     def reference_accesses(self, var_accesses):
         '''Get all variable access information. The loop variable is
         set as READ and WRITE. Then the loop body's access is added.
-        TODO: The start, stop and step values are only strings, so we
+        TODO #400: The start, stop and step values are only strings, so we
         can't get access information. It might then also be possible to
         just fall back to Loop.reference_accesses (which then should work).
-        :param var_accesses: \
+
+        :param var_accesses: VariablesAccessInfo instance that stores the \
+            information about variable accesses.
+        :type var_accesses: \
             :py:class:`psyclone.core.access_info.VariablesAccessInfo`
         '''
 

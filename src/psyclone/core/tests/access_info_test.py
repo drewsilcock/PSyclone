@@ -40,7 +40,7 @@ import pytest
 from psyclone.core.access_info import AccessInfo, VariableAccessInfo, \
     VariablesAccessInfo
 from psyclone.core.access_type import AccessType
-from psyclone.psyGen import Node
+from psyclone.psyGen import Node, InternalError
 
 
 def test_access_info():
@@ -48,23 +48,28 @@ def test_access_info():
     '''
     location = 12
     access_info = AccessInfo(AccessType.READ, location, Node())
-    assert access_info.get_access_type() == AccessType.READ
-    assert access_info.get_location() == location
-    assert access_info.get_indices() is None
+    assert access_info.access_type == AccessType.READ
+    assert access_info.location == location
+    assert access_info.indices is None
     access_info.change_read_to_write()
-    assert access_info.get_access_type() == AccessType.WRITE
-    access_info.set_indices(["i"])
-    assert access_info.get_indices() == ["i"]
+    assert access_info.access_type == AccessType.WRITE
+    with pytest.raises(InternalError) as err:
+        access_info.change_read_to_write()
+    assert "Trying to change variable to 'WRITE' which does not have "\
+        "'READ' access." in str(err)
+
+    access_info.indices = ["i"]
+    assert access_info.indices == ["i"]
 
     access_info = AccessInfo(AccessType.UNKNOWN, location, Node())
-    assert access_info.get_access_type() == AccessType.UNKNOWN
-    assert access_info.get_location() == location
-    assert access_info.get_indices() is None
+    assert access_info.access_type == AccessType.UNKNOWN
+    assert access_info.location == location
+    assert access_info.indices is None
 
     access_info = AccessInfo(AccessType.UNKNOWN, location, Node(), ["i", "j"])
-    assert access_info.get_access_type() == AccessType.UNKNOWN
-    assert access_info.get_location() == location
-    assert access_info.get_indices() == ["i", "j"]
+    assert access_info.access_type == AccessType.UNKNOWN
+    assert access_info.location == location
+    assert access_info.indices == ["i", "j"]
 
 
 # -----------------------------------------------------------------------------
@@ -74,15 +79,63 @@ def test_variable_access_info():
     '''
 
     vai = VariableAccessInfo("var_name")
-    assert vai.get_var_name() == "var_name"
+    assert vai.var_name == "var_name"
     assert vai.is_written() is False
     assert vai.is_read() is False
-    assert vai.get_all_accesses() == []
+    assert vai.all_accesses == []
 
-    vai.add_access(AccessType.READ, Node(), 1)
+    vai.add_access(AccessType.READ, Node(), 2)
     assert vai.is_read()
     vai.change_read_to_write()
     assert not vai.is_read()
+    assert vai.is_written()
+
+    # Now we have one write access, which we should not be able to
+    # change to write again:
+    with pytest.raises(InternalError) as err:
+        vai.change_read_to_write()
+    assert "Trying to change variable 'var_name' to 'WRITE' which "\
+        "does not have 'READ' access." in str(err)
+
+    assert vai.all_accesses[0] == vai[0]
+    with pytest.raises(IndexError) as err:
+        _ = vai[1]
+
+    # Add a READ access - now we should not be able to
+    # change read to write anymore:
+    vai.add_access(AccessType.READ, Node(), 1)
+    with pytest.raises(InternalError) as err:
+        vai.change_read_to_write()
+    assert "Variable 'var_name' had 2 accesses listed, "\
+           "not one in change_read_to_write." in str(err)
+
+
+# -----------------------------------------------------------------------------
+def test_variable_access_info_read_write():
+    # pylint: disable=invalid-name
+    '''Test the handling of READWRITE accesses. A READWRITE indicates both
+    a read and a write access, but if a variable as a READ and a WRITE
+    access, this is not one READWRITE access. A READWRITE access is only
+    used in subroutine calls (depending on kernel metadata)
+    '''
+
+    vai = VariableAccessInfo("var_name")
+    assert vai.has_read_write() is False
+
+    # Add a READ and WRITE access at the same location, and make sure it
+    # is not reported as READWRITE access
+    vai.add_access(AccessType.READ, Node(), 2)
+    vai.add_access(AccessType.WRITE, Node(), 2)
+    assert vai.has_read_write() is False
+
+    vai.add_access(AccessType.READWRITE, Node(), 2)
+    assert vai.has_read_write()
+
+    # Create a new instance, and add only one READWRITE access:
+    vai = VariableAccessInfo("var_name")
+    vai.add_access(AccessType.READWRITE, Node(), 2)
+    assert vai.has_read_write()
+    assert vai.is_read()
     assert vai.is_written()
 
 
@@ -104,33 +157,88 @@ def test_variables_access_info():
     var_accesses.next_location()
     var_accesses.add_access("read_written", AccessType.WRITE, node)
     var_accesses.add_access("read_written", AccessType.READ, node)
-    assert str(var_accesses) == "read: READ, read_written: READWRITE, "\
+    assert str(var_accesses) == "read: READ, read_written: READ+WRITE, "\
                                 "written: WRITE"
-    assert set(var_accesses.get_all_vars()) == set(["read", "written",
-                                                    "read_written"])
-    all_accesses = var_accesses.get_varinfo("read").get_all_accesses()
-    assert all_accesses[0].get_node() == node1
-    written_accesses = var_accesses.get_varinfo("written").get_all_accesses()
-    assert written_accesses[0].get_location() == 0
-    assert written_accesses[1].get_location() == 1
+    assert set(var_accesses.all_vars) == set(["read", "written",
+                                              "read_written"])
+    all_accesses = var_accesses["read"].all_accesses
+    assert all_accesses[0].node == node1
+    written_accesses = var_accesses["written"].all_accesses
+    assert written_accesses[0].location == 0
+    assert written_accesses[1].location == 1
     # Check that the location pointer is pointing to the next statement:
-    assert var_accesses.get_location() == 2
+    assert var_accesses.location == 2
 
-    # Create a new instance, which starts with statement number 999
-    var_accesses2 = VariablesAccessInfo(999)
+    # Create a new instance
+    var_accesses2 = VariablesAccessInfo()
     var_accesses2.add_access("new_var", AccessType.READ, node)
     var_accesses2.add_access("written", AccessType.READ, node)
-    new_var_accesses = var_accesses2.get_varinfo("new_var").get_all_accesses()
-    assert new_var_accesses[0].get_location() == 999
 
     # Now merge the new instance with the previous instance:
     var_accesses.merge(var_accesses2)
     assert str(var_accesses) == "new_var: READ, read: READ, " \
-                                "read_written: READWRITE, written: READWRITE"
+                                "read_written: READ+WRITE, written: READ+WRITE"
 
     with pytest.raises(KeyError):
-        var_accesses.get_varinfo("does_not_exist")
+        _ = var_accesses["does_not_exist"]
     with pytest.raises(KeyError):
         var_accesses.is_read("does_not_exist")
     with pytest.raises(KeyError):
         var_accesses.is_written("does_not_exist")
+
+
+# -----------------------------------------------------------------------------
+def test_variables_access_info_merge():
+    # pylint: disable=invalid-name
+    '''Tests the merge operation of VariablesAccessInfo.
+    '''
+    # First create one instance representing for example:
+    # a=b; c=d
+    var_accesses1 = VariablesAccessInfo()
+    node = Node()
+    var_accesses1.add_access("b", AccessType.READ, node)
+    var_accesses1.add_access("a", AccessType.WRITE, node)
+    var_accesses1.next_location()
+    var_accesses1.add_access("d", AccessType.READ, node)
+    var_accesses1.add_access("c", AccessType.WRITE, node)
+    c_accesses = var_accesses1["c"]
+    assert len(c_accesses.all_accesses) == 1
+    assert c_accesses[0].access_type == AccessType.WRITE
+
+    # First create one instance representing for example:
+    # e=f; g=h
+    var_accesses2 = VariablesAccessInfo()
+    var_accesses2.add_access("f", AccessType.READ, node)
+    var_accesses2.add_access("e", AccessType.WRITE, node)
+    var_accesses2.next_location()
+    var_accesses2.add_access("h", AccessType.READ, node)
+    var_accesses2.add_access("g", AccessType.WRITE, node)
+
+    # Now merge the second instance into the first one
+    var_accesses1.merge(var_accesses2)
+
+    # The e=f access pattern should have the same location
+    # as the c=d (since there is no next_location after
+    # adding the b=a access):
+    c_accesses = var_accesses1["c"]
+    e_accesses = var_accesses1["e"]
+    assert c_accesses[0].access_type == AccessType.WRITE
+    assert e_accesses[0].access_type == AccessType.WRITE
+    assert c_accesses[0].location == e_accesses[0].location
+
+    # Test that the g=h part has a higher location than the
+    # c=d data. This makes sure that merge() increases the
+    # location number of accesses when merging.
+    c_accesses = var_accesses1["c"]
+    g_accesses = var_accesses1["g"]
+    h_accesses = var_accesses1["h"]
+    assert c_accesses[0].location < g_accesses[0].location
+    assert g_accesses[0].location == h_accesses[0].location
+
+    # Also make sure that the access location was properly increased
+    # Originally we had locations 0,1. Then we merged accesses with
+    # location 0,1 in - the one at 0 is merged with the current 1,
+    # and the new location 1 increases the current location from
+    # 1 to 2:
+    # pylint: disable=protected-access
+    assert var_accesses1._location == 2

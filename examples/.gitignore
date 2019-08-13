@@ -9,4 +9,3 @@ gocean/eg3/compute_z_?.cl
 gocean/eg4/kern_call_kern_?_mod.f90
 gocean/eg4/kern_nested_use_?_mod.f90
 gocean/eg4/kern_use_var_?_mod.f90
-

@@ -4559,7 +4559,7 @@ def test_fp2astproc_handling_nested_intrinsic(f2008_parser):
     fp2node = Execution_Part.match(reader)[0][0].items[2]
     processor.process_nodes(fake_parent, [fp2node], None)
     fake_parent.children[0].view()
-    array_refs = fake_parent.walk(fake_parent.children, Reference)
+    array_refs = fake_parent.walk(Reference)
     assert "sum" not in [str(ref.name) for ref in array_refs]
 
 

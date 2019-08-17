@@ -125,7 +125,7 @@ directory where ``<PSYCLONEHOME>`` refers to the location where you
 download or clone PSyclone (:ref:`Getting Going <getting-going>`).
 
 In the ``tests/test_files/dynamo0p3`` directory the majority of examples
-start with ``testkern``. The exceptions are: ``simple.f90``,
+start with ``testkern``. The exceptions are: ``simple_mod.f90``,
 ``ru_kernel_mod.f90`` and ``matrix_vector_mod.F90``. The following test
 kernels can be used to generate kernel stub code (running stub
 generation from the ``<PSYCLONEHOME>/src/psyclone`` directory):
@@ -138,7 +138,7 @@ generation from the ``<PSYCLONEHOME>/src/psyclone`` directory):
     tests/test_files/dynamo0p3/testkern_orientation.F90
     tests/test_files/dynamo0p3/testkern_operator_orient_mod.f90
     tests/test_files/dynamo0p3/ru_kernel_mod.f90
-    tests/test_files/dynamo0p3/simple.f90
+    tests/test_files/dynamo0p3/simple_mod.f90
 
 .. _stub-generation-example:
 
@@ -146,33 +146,48 @@ Example
 -------
 
 A simple single field example of a kernel that can be used as input for the
-stub generator is found in ``tests/test_files/dynamo0p3/simple.f90`` and
+stub generator is found in ``tests/test_files/dynamo0p3/simple_mod.f90`` and
 is shown below:
 ::
 
     module simple_mod
-    type, extends(kernel_type) :: simple_type
-        type(arg_type), dimension(1) :: meta_args =  &
-            (/ arg_type(gh_field,gh_write,w1) /)
-        integer :: iterates_over = cells
-      contains
-        procedure, nopass :: code => simple_code
-    end type simple_type
+
+      type, extends(kernel_type) :: simple_type
+         type(arg_type), dimension(1) :: meta_args = (/ &
+              arg_type(gh_field, gh_inc, w1)            &
+              /)
+         integer, parameter :: iterates_over = cells
+       contains
+         procedure, public, nopass :: code => simple_code
+      end type simple_type
+
     contains
-    subroutine simple_code()
-    end subroutine
+
+      subroutine simple_code()
+      end subroutine simple_code
+
     end module simple_mod
 
 .. note::
-  The module name ``simple_mod`` and the type name ``simple_type`` share the same root ``simple`` and have the extensions ``_mod`` and ``_type`` respectively. This is a convention in Dynamo0.3 and is required by the kernel stub generator as it needs to determine the name of the type containing the metadata and infers this by reading the module name. If this rule is not followed the kernel stub generator will return with an error message (see Section :ref:`Errors <stub-generation-errors>`).
+  The module name ``simple_mod`` and the type name ``simple_type``
+  share the same root ``simple`` and have the extensions ``_mod``
+  and ``_type`` respectively. This is a convention in Dynamo0.3 API
+  and is required by the kernel stub generator as it needs to
+  determine the name of the type containing the metadata and infers
+  this by reading the module name. If this rule is not followed the
+  kernel stub generator will return with an error message (see
+  Section :ref:`Errors <stub-generation-errors>`).
 
 .. note::
-  Whilst strictly the kernel stub generator only requires the Kernel metadata to generate the appropriate stub code, the parser that the generator relies on currently requires a dummy kernel subroutine to exist.
+  Whilst strictly the kernel stub generator only requires the
+  Kernel metadata to generate the appropriate stub code, the parser
+  that the generator relies on currently requires a dummy kernel
+  subroutine to exist.
 
-If we run the kernel stub generator on the ``simple.f90`` example:
+If we run the kernel stub generator on the ``simple_mod.f90`` example:
 ::
 
-  > genkernelstub tests/test_files/dynamo0p3/simple.f90
+  > genkernelstub tests/test_files/dynamo0p3/simple_mod.f90
 
 we get the following kernel stub output:
 ::
@@ -186,7 +201,7 @@ we get the following kernel stub output:
       INTEGER, intent(in) :: nlayers
       INTEGER, intent(in) :: ndf_w1
       INTEGER, intent(in) :: undf_w1
-      REAL(KIND=r_def), intent(out), dimension(undf_w1) :: field_1_w1
+      REAL(KIND=r_def), intent(inout), dimension(undf_w1) :: field_1_w1
       INTEGER, intent(in), dimension(ndf_w1) :: map_w1
     END SUBROUTINE simple_code
   END MODULE simple_mod
@@ -345,7 +360,7 @@ should fail with appropriate warnings because of that. For example:
     one of ['w3', 'wtheta', 'w2v', 'w0', 'w1', 'w2', 'w2h', 'any_w2'] but
     found 'any_space_1'"
 
-As noted above, if the Dynamo0.3 naming convention for module and type
+As noted above, if the Dynamo0.3 API naming convention for module and type
 names is not followed, the stub generator will return with an error
 message. For example:
 ::

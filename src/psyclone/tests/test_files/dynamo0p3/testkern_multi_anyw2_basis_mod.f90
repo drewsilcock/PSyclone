@@ -53,7 +53,7 @@ module testkern_multi_anyw2_basis_mod
      integer :: iterates_over = cells
      integer :: gh_shape = gh_quadrature_XYoZ
    contains
-     procedure, nopass :: code => testkern_multi_anyw2_basis_code
+     procedure, public, nopass :: code => testkern_multi_anyw2_basis_code
   end type testkern_multi_anyw2_basis_type
 
 contains

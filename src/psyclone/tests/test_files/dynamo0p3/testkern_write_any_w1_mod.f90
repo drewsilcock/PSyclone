@@ -1,0 +1,105 @@
+! -----------------------------------------------------------------------------
+! BSD 3-Clause License
+!
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
+! All rights reserved.
+!
+! Redistribution and use in source and binary forms, with or without
+! modification, are permitted provided that the following conditions are met:
+!
+! * Redistributions of source code must retain the above copyright notice, this
+!   list of conditions and the following disclaimer.
+!
+! * Redistributions in binary form must reproduce the above copyright notice,
+!   this list of conditions and the following disclaimer in the documentation
+!   and/or other materials provided with the distribution.
+!
+! * Neither the name of the copyright holder nor the names of its
+!   contributors may be used to endorse or promote products derived from
+!   this software without specific prior written permission.
+!
+! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+! "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+! LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+! FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+! COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+! INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+! BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+! LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+! LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+! POSSIBILITY OF SUCH DAMAGE.
+! -----------------------------------------------------------------------------
+! Author R. W. Ford STFC Daresbury Lab
+! Modified I. Kavcic Met Office
+
+! A kernel which writes to two fields, one on any space and one on W1
+! (continuous). The generated loop bounds in the PSy layer must therefore
+! be for the 'worst case' which is the continuous space.
+module testkern_write_any_w1_mod
+
+  use constants_mod
+  use argument_mod
+  use kernel_mod
+
+  implicit none
+
+  type, extends(kernel_type) :: testkern_write_any_w1_type
+     type(arg_type), dimension(7) :: meta_args = (/ &
+          arg_type(gh_field, gh_inc, any_space_1),  &
+          arg_type(gh_field, gh_read, w2),          &
+          arg_type(gh_field, gh_read, w2),          &
+          arg_type(gh_field, gh_inc,  w1),          &
+          arg_type(gh_field, gh_read, wtheta),      &
+          arg_type(gh_field, gh_read, w2h),         &
+          arg_type(gh_field, gh_read, w2v)          &
+           /)
+     integer, parameter :: iterates_over = cells
+   contains
+     procedure, public, nopass :: code => testkern_write_any_w1_code
+  end type testkern_write_any_w1_type
+
+contains
+
+  subroutine testkern_write_any_w1_code(nlayers, field1,            &
+                                        field2, field3, field4,     &
+                                        field5, field6, field7,     &
+                                        ndf_any_space_1,            &
+                                        undf_any_space_1,           &
+                                        map_any_space_1,            &
+                                        ndf_w2, undf_w2, map_w2,    &
+                                        ndf_w1, undf_w1, map_w1,    &
+                                        ndf_wtheta, undf_wtheta,    &
+                                        map_wtheta,                 &
+                                        ndf_w2h, undf_w2h, map_w2h, &
+                                        ndf_w2v, undf_w2v, map_w2v)
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_any_space_1
+    integer(kind=i_def), intent(in) :: ndf_w1
+    integer(kind=i_def), intent(in) :: ndf_w2
+    integer(kind=i_def), intent(in) :: ndf_w2h
+    integer(kind=i_def), intent(in) :: ndf_w2v
+    integer(kind=i_def), intent(in) :: ndf_wtheta
+    integer(kind=i_def), intent(in) :: undf_any_space_1, undf_w2, undf_w1, &
+                                       undf_wtheta, undf_w2h, undf_w2v
+    integer(kind=i_def), intent(in), dimension(ndf_any_space_1) :: map_any_space_1
+    integer(kind=i_def), intent(in), dimension(ndf_w1)          :: map_w1
+    integer(kind=i_def), intent(in), dimension(ndf_w2)          :: map_w2
+    integer(kind=i_def), intent(in), dimension(ndf_w2h)         :: map_w2h
+    integer(kind=i_def), intent(in), dimension(ndf_w2v)         :: map_w2v
+    integer(kind=i_def), intent(in), dimension(ndf_wtheta)      :: map_wtheta
+    real(kind=r_def), intent(inout), dimension(undf_any_space_1) :: field1
+    real(kind=r_def), intent(in), dimension(undf_w2)             :: field2
+    real(kind=r_def), intent(in), dimension(undf_w2)             :: field3
+    real(kind=r_def), intent(inout), dimension(undf_w1)          :: field_4_w1
+    real(kind=r_def), intent(in), dimension(undf_wtheta)         :: field5
+    real(kind=r_def), intent(in), dimension(undf_w2h)            :: field6
+    real(kind=r_def), intent(in), dimension(undf_w2v)            :: field7
+
+  end subroutine testkern_write_any_w1_code
+
+end module testkern_write_any_w1_mod

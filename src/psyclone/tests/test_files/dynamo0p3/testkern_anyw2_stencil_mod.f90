@@ -50,7 +50,7 @@ module testkern_anyw2_stencil_mod
           /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_anyw2_stencil_code
+     procedure, public, nopass :: code => testkern_anyw2_stencil_code
   end type testkern_anyw2_stencil_type
 
 contains

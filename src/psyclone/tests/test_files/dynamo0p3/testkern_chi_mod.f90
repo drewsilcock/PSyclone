@@ -31,10 +31,10 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Authors R. W. Ford and A. R. Porter, STFC Daresbury Lab
-! Modified I. Kavcic, Met Office
+! Author R. W. Ford STFC Daresbury Lab
+! Modified I. Kavcic Met Office
 
-module testkern_w2_only_mod
+module testkern_chi_mod
 
   use constants_mod
   use argument_mod
@@ -42,30 +42,37 @@ module testkern_w2_only_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_w2_only_type
-     type(arg_type), dimension(2) :: meta_args = (/ &
-          arg_type(gh_field, gh_inc,  w2),          &
-          arg_type(gh_field, gh_read, w2)           &
+  type, extends(kernel_type) :: testkern_chi_type
+     type(arg_type), dimension(3) :: meta_args = (/ &
+          arg_type(gh_field,   gh_inc,  w0),        &
+          arg_type(gh_field*3, gh_inc,  w0),        &
+          arg_type(gh_field,   gh_read, w0)         &
           /)
-     integer :: iterates_over = cells
+     integer, parameter :: iterates_over = cells
    contains
-     procedure, public, nopass :: code => testkern_w2_only_code
-  end type testkern_w2_only_type
+     procedure, public, nopass :: code => testkern_chi_code
+  end type testkern_chi_type
 
 contains
 
-  subroutine testkern_w2_only_code(nlayers, field1, field2, &
-                                   ndf_w2, undf_w2, map_w2)
+  subroutine testkern_chi_code(nlayers,                         &
+                               field1,                          &
+                               field2_v1, field2_v2, field2_v3, &
+                               field3,                          &
+                               ndf_w0, undf_w0, map_w0)
 
     implicit none
 
     integer(kind=i_def), intent(in) :: nlayers
-    integer(kind=i_def), intent(in) :: ndf_w2
-    integer(kind=i_def), intent(in) :: undf_w2
-    integer(kind=i_def), intent(in), dimension(ndf_w2)  :: map_w2
-    real(kind=r_def), intent(inout), dimension(undf_w2) :: field1
-    real(kind=r_def), intent(in), dimension(undf_w2)    :: field2
+    integer(kind=i_def), intent(in) :: ndf_w0
+    integer(kind=i_def), intent(in) :: undf_w0
+    integer(kind=i_def), intent(in), dimension(ndf_w0) :: map_w0
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: field1
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: field2_v1
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: field2_v2
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: field2_v3
+    real(kind=r_def), intent(in), dimension(undf_w0) :: field3
 
-  end subroutine testkern_w2_only_code
+  end subroutine testkern_chi_code
 
-end module testkern_w2_only_mod
+end module testkern_chi_mod

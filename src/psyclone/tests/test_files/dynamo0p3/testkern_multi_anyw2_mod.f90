@@ -50,7 +50,7 @@ module testkern_multi_anyw2_mod
           /)
      integer :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_multi_anyw2_code
+     procedure, public, nopass :: code => testkern_multi_anyw2_code
   end type testkern_multi_anyw2_type
 
 contains

@@ -639,20 +639,20 @@ class DynArgDescriptor03(Descriptor):
                     "It does not make sense for a field on a discontinuous "
                     "space ({0}) to have a 'gh_inc' access".
                     format(self._function_space1.lower()))
-            # TODO: extend for "gh_write"
             if self._function_space1.lower() in CONTINUOUS_FUNCTION_SPACES \
-               and self._access_type == AccessType.READWRITE:
+               and self._access_type in [AccessType.READWRITE,
+                                         AccessType.WRITE]:
                 raise ParseError(
                     "It does not make sense for a field on a continuous "
-                    "space ({0}) to have a 'gh_readwrite' access".
-                    format(self._function_space1.lower()))
-            # TODO: extend for "gh_write"
+                    "space ({0}) to have a 'gh_readwrite' or 'gh_write' "
+                    "access".format(self._function_space1.lower()))
             if self._function_space1.lower() in VALID_ANY_SPACE_NAMES \
-               and self._access_type == AccessType.READWRITE:
+               and self._access_type in [AccessType.READWRITE,
+                                         AccessType.WRITE]:
                 raise ParseError(
-                    "In the dynamo0.3 API a field on any_space cannot "
-                    "have 'gh_readwrite' access because it is treated "
-                    "as continuous")
+                    "In the Dynamo0.3 API a field on 'any_space' cannot "
+                    "have 'gh_readwrite' or 'gh_write' access because "
+                    "it is treated as continuous")
             if stencil and self._access_type != AccessType.READ:
                 raise ParseError("a stencil must be read only so its access "
                                  "should be gh_read")

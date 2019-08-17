@@ -34,7 +34,7 @@
 ! Author R. W. Ford STFC Daresbury Lab
 ! Modified I. Kavcic Met Office
 
-module testkern_anyw2_stencil_mod
+module testkern_anyw2_vector_mod
 
   use constants_mod
   use argument_mod
@@ -42,45 +42,49 @@ module testkern_anyw2_stencil_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_anyw2_stencil_type
-     type(arg_type), dimension(3) :: meta_args = (/            &
-          arg_type(gh_field, gh_inc,  any_w2),                 &
-          arg_type(gh_field, gh_read, any_w2, stencil(cross)), &
-          arg_type(gh_field, gh_read, any_w2, stencil(cross))  &
+  type, extends(kernel_type) :: testkern_anyw2_vector_type
+     type(arg_type), dimension(3) :: meta_args = (/ &
+          arg_type(gh_field,   gh_inc,  any_w2),    &
+          arg_type(gh_field,   gh_read, any_w2),    &
+          arg_type(gh_field*2, gh_read, any_w2)     &
           /)
+     type(func_type), dimension(1) :: meta_funcs = (/ &
+          func_type(any_w2, gh_basis, gh_diff_basis) /)
      integer, parameter :: iterates_over = cells
+     integer, parameter :: gh_shape = gh_quadrature_XYoZ
    contains
-     procedure, nopass :: code => testkern_anyw2_stencil_code
-  end type testkern_anyw2_stencil_type
+     procedure, nopass :: code => testkern_anyw2_vector_code
+  end type testkern_anyw2_vector_type
 
 contains
 
-  subroutine testkern_anyw2_stencil_code(nlayers,                 &
-                                         field1, field2,          &
-                                         field2_stencil_size,     &
-                                         field2_stencil_dofmap,   &
-                                         field3,                  &
-                                         field3_stencil_size,     &
-                                         field3_stencil_dofmap,   &
-                                         ndf_any_w2, undf_any_w2, &
-                                         map_any_w2)
+  subroutine testkern_anyw2_vector_code(nlayers,              &
+                                        field1, field2,       &
+                                        field3_v1, field3_v2, &
+                                        ndf_any_w2,           &
+                                        undf_any_w2,          &
+                                        map_any_w2,           &
+                                        basis_any_w2,         &
+                                        diff_basis_any_w2,    &
+                                        np_xy, np_z,          &
+                                        weights_xy, weights_z)
 
     implicit none
 
     integer(kind=i_def), intent(in) :: nlayers
     integer(kind=i_def), intent(in) :: ndf_any_w2
     integer(kind=i_def), intent(in) :: undf_any_w2
-    integer(kind=i_def), intent(in) :: field2_stencil_size, &
-                                       field3_stencil_size
+    integer(kind=i_def), intent(in) :: np_xy, np_z
     integer(kind=i_def), intent(in), dimension(ndf_any_w2) :: map_any_w2
-    integer(kind=i_def), intent(in), dimension(ndf_any_w2,field2_stencil_size) :: &
-                                       field2_stencil_dofmap
-    integer(kind=i_def), intent(in), dimension(ndf_any_w2,field3_stencil_size) :: &
-                                       field3_stencil_dofmap
     real(kind=r_def), intent(inout), dimension(undf_any_w2) :: field1
     real(kind=r_def), intent(in), dimension(undf_any_w2)    :: field2
-    real(kind=r_def), intent(in), dimension(undf_any_w2)    :: field3
+    real(kind=r_def), intent(in), dimension(undf_any_w2)    :: field3_v1
+    real(kind=r_def), intent(in), dimension(undf_any_w2)    :: field3_v2
+    real(kind=r_def), intent(in), dimension(3,ndf_any_w2,np_xy,np_z) :: basis_any_w2
+    real(kind=r_def), intent(in), dimension(1,ndf_any_w2,np_xy,np_z) :: diff_basis_any_w2
+    real(kind=r_def), intent(in), dimension(np_xy) :: weights_xy
+    real(kind=r_def), intent(in), dimension(np_z)  :: weights_z
 
-  end subroutine testkern_anyw2_stencil_code
+  end subroutine testkern_anyw2_vector_code
 
-end module testkern_anyw2_stencil_mod
+end module testkern_anyw2_vector_mod

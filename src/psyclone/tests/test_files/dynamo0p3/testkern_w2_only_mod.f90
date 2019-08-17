@@ -31,22 +31,41 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Author R. W. Ford STFC Daresbury Lab
-! Modified I. Kavcic Met Office
+! Authors R. W. Ford and A. R. Porter, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
-program single_invoke_multi_anyw2
+module testkern_w2_only_mod
 
-  ! Description: test that correct code is produced when we have multiple
-  ! any_w2 function spaces in a kernel call
-  use testkern_multi_anyw2_mod, only: testkern_multi_anyw2_type
-  use inf,                      only: field_type
+  use constants_mod
+  use argument_mod
+  use kernel_mod
 
   implicit none
 
-  type(field_type) :: f1, f2, f3
+  type, extends(kernel_type) :: testkern_w2_only_type
+     type(arg_type), dimension(2) :: meta_args = (/ &
+          arg_type(gh_field, gh_inc,  w2),          &
+          arg_type(gh_field, gh_read, w2)           &
+          /)
+     integer :: iterates_over = cells
+   contains
+     procedure, nopass :: code => testkern_w2_only_code
+  end type testkern_w2_only_type
 
-  call invoke(                               &
-       testkern_multi_anyw2_type(f1, f2, f3) &
-          )
+contains
 
-end program single_invoke_multi_anyw2
+  subroutine testkern_w2_only_code(nlayers, field1, field2, &
+                                   ndf_w2, undf_w2, map_w2)
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_w2
+    integer(kind=i_def), intent(in) :: undf_w2
+    integer(kind=i_def), intent(in), dimension(ndf_w2)  :: map_w2
+    real(kind=r_def), intent(inout), dimension(undf_w2) :: field1
+    real(kind=r_def), intent(in), dimension(undf_w2)    :: field2
+
+  end subroutine testkern_w2_only_code
+
+end module testkern_w2_only_mod

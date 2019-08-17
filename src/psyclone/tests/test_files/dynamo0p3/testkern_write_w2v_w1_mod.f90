@@ -46,15 +46,15 @@ module testkern_write_w2v_w1_mod
   implicit none
 
   type, extends(kernel_type) :: testkern_write_w2v_w1_type
-     type(arg_type), dimension(7) :: meta_args =   &
-          (/ arg_type(gh_field, gh_read,  w3),     &
-             arg_type(gh_field, gh_read,  w0),     &
-             arg_type(gh_field, gh_read,  w2),     &
-             arg_type(gh_field, gh_write, w1),     &
-             arg_type(gh_field, gh_read,  wtheta), &
-             arg_type(gh_field, gh_read,  w2h),    &
-             arg_type(gh_field, gh_write, w2v)     &
-           /)
+     type(arg_type), dimension(7) :: meta_args = (/ &
+          arg_type(gh_field, gh_read,  w3),         &
+          arg_type(gh_field, gh_read,  w0),         &
+          arg_type(gh_field, gh_read,  w2),         &
+          arg_type(gh_field, gh_inc,   w1),         &
+          arg_type(gh_field, gh_read,  wtheta),     &
+          arg_type(gh_field, gh_read,  w2h),        &
+          arg_type(gh_field, gh_write, w2v)         &
+          /)
      integer :: iterates_over = cells
    contains
      procedure, nopass :: code => testkern_write_w2v_w1_code
@@ -62,11 +62,10 @@ module testkern_write_w2v_w1_mod
 
 contains
 
-  SUBROUTINE testkern_write_w2v_w1_code(nlayers,                             &
-                                        field_1_w3, field_2_w0,              &
-                                        field_3_w2, field_4_w1,              &
-                                        field_5_wtheta, field_6_w2h,         &
-                                        field_7_w2v,                         &
+  subroutine testkern_write_w2v_w1_code(nlayers,                             &
+                                        field1, field2,                      &
+                                        field3, field4,                      &
+                                        field5, field6, field7,              &
                                         ndf_w3, undf_w3, map_w3,             &
                                         ndf_w0, undf_w0, map_w0,             &
                                         ndf_w2, undf_w2, map_w2,             &
@@ -75,38 +74,38 @@ contains
                                         ndf_w2h, undf_w2h, map_w2h,          &
                                         ndf_w2v, undf_w2v, map_w2v)
 
-    IMPLICIT NONE
+    implicit none
 
-    INTEGER, intent(in) :: nlayers
-    INTEGER, intent(in) :: ndf_w3
-    INTEGER, intent(in) :: undf_w3
-    INTEGER, intent(in) :: ndf_w0
-    INTEGER, intent(in) :: undf_w0
-    INTEGER, intent(in) :: ndf_w2
-    INTEGER, intent(in) :: undf_w2
-    INTEGER, intent(in) :: ndf_w1
-    INTEGER, intent(in) :: undf_w1
-    INTEGER, intent(in) :: ndf_wtheta
-    INTEGER, intent(in) :: undf_wtheta
-    INTEGER, intent(in) :: ndf_w2h
-    INTEGER, intent(in) :: undf_w2h
-    INTEGER, intent(in) :: ndf_w2v
-    INTEGER, intent(in) :: undf_w2v
-    REAL(KIND=r_def), intent(in), dimension(undf_w3) :: field_1_w3
-    REAL(KIND=r_def), intent(in), dimension(undf_w0) :: field_2_w0
-    REAL(KIND=r_def), intent(in), dimension(undf_w2) :: field_3_w2
-    REAL(KIND=r_def), intent(out), dimension(undf_w1) :: field_4_w1
-    REAL(KIND=r_def), intent(in), dimension(undf_wtheta) :: field_5_wtheta
-    REAL(KIND=r_def), intent(in), dimension(undf_w2h) :: field_6_w2h
-    REAL(KIND=r_def), intent(out), dimension(undf_w2v) :: field_7_w2v
-    INTEGER, intent(in), dimension(ndf_w3) :: map_w3
-    INTEGER, intent(in), dimension(ndf_w0) :: map_w0
-    INTEGER, intent(in), dimension(ndf_w2) :: map_w2
-    INTEGER, intent(in), dimension(ndf_w1) :: map_w1
-    INTEGER, intent(in), dimension(ndf_wtheta) :: map_wtheta
-    INTEGER, intent(in), dimension(ndf_w2h) :: map_w2h
-    INTEGER, intent(in), dimension(ndf_w2v) :: map_w2v
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_w3
+    integer(kind=i_def), intent(in) :: undf_w3
+    integer(kind=i_def), intent(in) :: ndf_w0
+    integer(kind=i_def), intent(in) :: undf_w0
+    integer(kind=i_def), intent(in) :: ndf_w2
+    integer(kind=i_def), intent(in) :: undf_w2
+    integer(kind=i_def), intent(in) :: ndf_w1
+    integer(kind=i_def), intent(in) :: undf_w1
+    integer(kind=i_def), intent(in) :: ndf_wtheta
+    integer(kind=i_def), intent(in) :: undf_wtheta
+    integer(kind=i_def), intent(in) :: ndf_w2h
+    integer(kind=i_def), intent(in) :: undf_w2h
+    integer(kind=i_def), intent(in) :: ndf_w2v
+    integer(kind=i_def), intent(in) :: undf_w2v
+    integer(kind=i_def), intent(in), dimension(ndf_w3) :: map_w3
+    integer(kind=i_def), intent(in), dimension(ndf_w0) :: map_w0
+    integer(kind=i_def), intent(in), dimension(ndf_w2) :: map_w2
+    integer(kind=i_def), intent(in), dimension(ndf_w1) :: map_w1
+    integer(kind=i_def), intent(in), dimension(ndf_wtheta) :: map_wtheta
+    integer(kind=i_def), intent(in), dimension(ndf_w2h) :: map_w2h
+    integer(kind=i_def), intent(in), dimension(ndf_w2v) :: map_w2v
+    real(kind=r_def), intent(in), dimension(undf_w3) :: field1
+    real(kind=r_def), intent(in), dimension(undf_w0) :: field2
+    real(kind=r_def), intent(in), dimension(undf_w2) :: field3
+    real(kind=r_def), intent(inout), dimension(undf_w1) :: field4
+    real(kind=r_def), intent(in), dimension(undf_wtheta) :: field5
+    real(kind=r_def), intent(in), dimension(undf_w2h) :: field6
+    real(kind=r_def), intent(out), dimension(undf_w2v) :: field7
 
-  END SUBROUTINE testkern_write_w2v_w1_code
+  end subroutine testkern_write_w2v_w1_code
 
 end module testkern_write_w2v_w1_mod

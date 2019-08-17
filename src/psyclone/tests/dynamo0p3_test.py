@@ -32,7 +32,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 # Authors R. W. Ford, A. R. Porter and S. Siso, STFC Daresbury Lab
-# Modified I. Kavcic Met Office, C.M. Maynard, Met Office/University of Reading.
+# Modified I. Kavcic Met Office,
+#          C.M. Maynard, Met Office/University of Reading.
 
 ''' This module tests the Dynamo 0.3 API using pytest. '''
 
@@ -87,13 +88,13 @@ def test_get_op_orientation_name():
 CODE = '''
 module testkern_qr
   type, extends(kernel_type) :: testkern_qr_type
-     type(arg_type), meta_args(6) =                 &
-          (/ arg_type(gh_real, gh_read),            &
-             arg_type(gh_field,gh_write,w1),        &
-             arg_type(gh_field,gh_read, w2),        &
-             arg_type(gh_operator,gh_read, w2, w2), &
-             arg_type(gh_field,gh_read, w3),        &
-             arg_type(gh_integer, gh_read)          &
+     type(arg_type), meta_args(6) =                  &
+          (/ arg_type(gh_real,  gh_read),            &
+             arg_type(gh_field, gh_inc, w1),         &
+             arg_type(gh_field, gh_read, w2),        &
+             arg_type(gh_operator, gh_read, w2, w2), &
+             arg_type(gh_field, gh_read, w3),        &
+             arg_type(gh_integer, gh_read)           &
            /)
      type(func_type), dimension(3) :: meta_funcs =  &
           (/ func_type(w1, gh_basis),               &
@@ -118,8 +119,8 @@ def test_arg_descriptor_wrong_type():
     ''' Tests that an error is raised when the argument descriptor
     metadata is not of type arg_type. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                        "arg_typ(gh_field,gh_read, w2)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                        "arg_typ(gh_field, gh_read, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -132,7 +133,7 @@ def test_arg_descriptor_vector_str():
     ''' Test the str method of an argument descriptor containing a vector '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     # Change the meta-data so that the second argument is a vector
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*3,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1", "gh_field*3, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     dkm = DynKernMetadata(ast, name=name)
@@ -140,7 +141,7 @@ def test_arg_descriptor_vector_str():
     expected = (
         "DynArgDescriptor03 object\n"
         "  argument_type[0]='gh_field'*3\n"
-        "  access_descriptor[1]='gh_write'\n"
+        "  access_descriptor[1]='gh_inc'\n"
         "  function_space[2]='w1'")
     assert expected in dkm_str
 
@@ -223,8 +224,8 @@ def test_ad_field_type_too_few_args():
     ''' Tests that an error is raised when the argument descriptor
     metadata for a field has fewer than 3 args. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_field,gh_write)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_field, gh_inc)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -237,8 +238,8 @@ def test_ad_fld_type_too_many_args():
     ''' Tests that an error is raised when the argument descriptor
     metadata has more than 4 args. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_field,gh_write,w1,w1,w2)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_field, gh_inc, w1, w1, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -251,8 +252,8 @@ def test_ad_fld_type_1st_arg():
     ''' Tests that an error is raised when the 1st argument is
     invalid'''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_hedge,gh_write,w1)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_hedge, gh_inc, w1)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -290,7 +291,7 @@ def test_arg_descriptor_invalid_fs1():
     ''' Tests that an error is raised when an invalid function space
     name is provided as the third argument. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_read, w3", "gh_field,gh_read, w4", 1)
+    code = CODE.replace("gh_field, gh_read, w3", "gh_field, gh_read, w4", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -314,7 +315,7 @@ def test_invalid_vector_operator():
     ''' Tests that an error is raised when a vector does not use "*"
     as its operator. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field+3,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1", "gh_field+3, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -326,7 +327,7 @@ def test_invalid_vector_value_type():
     ''' Tests that an error is raised when a vector value is not a valid
     integer '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*n,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1", "gh_field*n, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -338,7 +339,7 @@ def test_invalid_vector_value_range():
     ''' Tests that an error is raised when a vector value is not a valid
     value (<2) '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*1,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1", "gh_field*1, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -551,7 +552,7 @@ def test_field_deref(tmpdir, dist_mem):
         assert output in generated_code
 
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-    
+
     output = (
         "      REAL(KIND=r_def), intent(in) :: a\n"
         "      TYPE(field_type), intent(inout) :: f1\n"
@@ -827,7 +828,7 @@ def test_real_scalar(tmpdir):
     generated_code = str(psy.gen)
 
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-    
+
     expected = (
         "    SUBROUTINE invoke_0_testkern_type(a, f1, f2, m1, m2)\n"
         "      USE testkern, ONLY: testkern_code\n"
@@ -912,9 +913,10 @@ def test_int_scalar(tmpdir):
     generated_code = str(psy.gen)
 
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-    
+
     expected = (
-        "    SUBROUTINE invoke_0_testkern_one_int_scalar_type(f1, iflag, f2, m1, m2)\n"
+        "    SUBROUTINE invoke_0_testkern_one_int_scalar_type"
+        "(f1, iflag, f2, m1, m2)\n"
         "      USE testkern_one_int_scalar_mod, ONLY: testkern_code\n"
         "      USE mesh_mod, ONLY: mesh_type\n"
         "      INTEGER, intent(in) :: iflag\n"
@@ -997,8 +999,8 @@ def test_two_real_scalars(tmpdir):
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     generated_code = str(psy.gen)
 
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)    
-    
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
     expected = (
         "    SUBROUTINE invoke_0_testkern_type(a, f1, f2, m1, m2, b)\n"
         "      USE testkern_two_real_scalars, ONLY: testkern_code\n"
@@ -1082,7 +1084,7 @@ def test_two_int_scalars(tmpdir):
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     generated_code = str(psy.gen)
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-    
+
     expected = (
         "    SUBROUTINE invoke_0(iflag, f1, f2, m1, m2, istep)\n"
         "      USE testkern_two_int_scalars, ONLY: testkern_code\n"
@@ -1172,8 +1174,8 @@ def test_two_scalars(tmpdir):
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
 
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)    
-    
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
     generated_code = str(psy.gen)
     expected = (
         "    SUBROUTINE invoke_0_testkern_type(a, f1, f2, m1, m2, istep)\n"
@@ -1272,7 +1274,7 @@ def test_vector_field():
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     generated_code = str(psy.gen)
-    
+
     assert ("SUBROUTINE invoke_0_testkern_chi_type(f1, chi, f2)" in
             generated_code)
     assert "TYPE(field_type), intent(inout) :: f1, chi(3)" in generated_code
@@ -1287,7 +1289,7 @@ def test_vector_field_2(tmpdir):
     generated_code = str(psy.gen)
 
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-    
+
     # all references to chi_proxy should be chi_proxy(1)
     assert "chi_proxy%" not in generated_code
     assert generated_code.count("chi_proxy(1)%vspace") == 5
@@ -3164,7 +3166,7 @@ def test_halo_dirty_4():
         "      !\n"
         "      CALL chi_proxy(1)%set_dirty()\n"
         "      CALL chi_proxy(2)%set_dirty()\n"
-        "      CALL chi_proxy(3)%set_dirty()\n"                                 
+        "      CALL chi_proxy(3)%set_dirty()\n"
         "      CALL f1_proxy%set_dirty()\n")
     assert expected in generated_code
 
@@ -3436,7 +3438,7 @@ def test_stencil_read_only():
     accessed as gh_read'''
     fparser.logging.disable(fparser.logging.CRITICAL)
     code = STENCIL_CODE.replace("gh_read, w2, stencil(cross)",
-                                "gh_write, w2, stencil(cross)", 1)
+                                "gh_inc, w2, stencil(cross)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     with pytest.raises(ParseError) as excinfo:
         _ = DynKernMetadata(ast, name="stencil_type")
@@ -3448,8 +3450,8 @@ def test_fs_discontinuous_and_inc_error():
     and gh_inc are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in DISCONTINUOUS_FUNCTION_SPACES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w3)",
-                            "arg_type(gh_field,gh_inc, " +
+        code = CODE.replace("arg_type(gh_field, gh_read, w3)",
+                            "arg_type(gh_field, gh_inc, " +
                             fspace + ")", 1)
         ast = fpapi.parse(code, ignore_comments=False)
         with pytest.raises(ParseError) as excinfo:
@@ -3459,35 +3461,37 @@ def test_fs_discontinuous_and_inc_error():
                 in str(excinfo.value))
 
 
-def test_fs_continuous_and_readwrite_error():
+def test_fs_continuous_readwrite_write_error():
     ''' Test that an error is raised if a continuous function space and
     gh_readwrite are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in CONTINUOUS_FUNCTION_SPACES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                            "arg_type(gh_field,gh_readwrite, " +
-                            fspace + ")", 1)
-        ast = fpapi.parse(code, ignore_comments=False)
-        with pytest.raises(ParseError) as excinfo:
-            _ = DynKernMetadata(ast, name="testkern_qr_type")
-        assert ("It does not make sense for a field on a continuous "
-                "space (" + fspace + ") to have a 'gh_readwrite' access"
-                in str(excinfo.value))
+        for access in ['gh_readwrite', 'gh_write']:
+            code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                                "arg_type(gh_field, " + access +
+                                ", " + fspace + ")", 1)
+            ast = fpapi.parse(code, ignore_comments=False)
+            with pytest.raises(ParseError) as excinfo:
+                _ = DynKernMetadata(ast, name="testkern_qr_type")
+            assert ("It does not make sense for a field on a continuous "
+                    "space (" + fspace + ") to have a 'gh_readwrite' or "
+                    "'gh_write' access" in str(excinfo.value))
 
 
-def test_fs_anyspace_and_readwrite_error():
+def test_fs_anyspace_readwrite_write_error():
     ''' Test that an error is raised if any_space and
     gh_readwrite are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in VALID_ANY_SPACE_NAMES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                            "arg_type(gh_field,gh_readwrite, " +
-                            fspace + ")", 1)
-        ast = fpapi.parse(code, ignore_comments=False)
-        with pytest.raises(ParseError) as excinfo:
-            _ = DynKernMetadata(ast, name="testkern_qr_type")
-        assert ("field on any_space cannot have 'gh_readwrite' access"
-                in str(excinfo.value))
+        for access in ["gh_readwrite", "gh_write"]:
+            code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                                "arg_type(gh_field, " + access +
+                                ", " + fspace + ")", 1)
+            ast = fpapi.parse(code, ignore_comments=False)
+            with pytest.raises(ParseError) as excinfo:
+                _ = DynKernMetadata(ast, name="testkern_qr_type")
+            assert ("field on 'any_space' cannot have 'gh_readwrite' "
+                    "or 'gh_write' access" in str(excinfo.value))
 
 
 def test_halo_exchange_view(capsys):
@@ -3541,7 +3545,7 @@ def test_mesh_mod(tmpdir):
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     result = str(psy.gen)
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)    
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
     assert "USE mesh_mod, ONLY: mesh_type" in result
     assert "TYPE(mesh_type), pointer :: mesh => null()" in result
     output = ("      !\n"

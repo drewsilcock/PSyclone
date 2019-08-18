@@ -39,9 +39,9 @@
 ! be for the 'worst case' which is the continuous space.
 module testkern_write_w2v_w1_mod
 
+  use constants_mod
   use argument_mod
   use kernel_mod
-  use constants_mod
 
   implicit none
 

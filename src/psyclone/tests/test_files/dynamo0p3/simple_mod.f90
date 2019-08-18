@@ -36,6 +36,12 @@
 
 module simple_mod
 
+  use constants_mod
+  use argument_mod
+  use kernel_mod
+
+  implicit none
+
   type, extends(kernel_type) :: simple_type
      type(arg_type), dimension(1) :: meta_args = (/ &
           arg_type(gh_field, gh_inc, w1)            &

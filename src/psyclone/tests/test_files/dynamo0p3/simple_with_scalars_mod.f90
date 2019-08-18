@@ -30,12 +30,11 @@
 ! LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
-!-------------------------------------------------------------------------------
-! Author R. W. Ford STFC Daresbury Lab
-! Modified C. M. Maynard Met Office/University of Reading
-! Modified I. Kavcic
+! -----------------------------------------------------------------------------
+! Author A. R. Porter, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
-module testkern_chi_2_mod
+module simple_with_scalars_mod
 
   use constants_mod
   use argument_mod
@@ -43,30 +42,19 @@ module testkern_chi_2_mod
 
   implicit none
 
-  type, public, extends(kernel_type) :: testkern_chi_2_type
-     type(arg_type), dimension(2) :: meta_args = (/ &
-          arg_type(gh_field*3, gh_inc, w0),         &
-          arg_type(gh_field,   gh_inc, w0)          &
-          /)
-     integer :: iterates_over = cells
+  type, extends(kernel_type) :: simple_with_scalars_type
+     type(arg_type), dimension(3) :: meta_args = (/ &
+          arg_type(gh_real,    gh_read),            &
+          arg_type(gh_field,   gh_inc, w1),         &
+          arg_type(gh_integer, gh_read) /)
+     integer, parameter :: iterates_over = cells
    contains
-     procedure, public, nopass :: code => testkern_chi_2_code
-  end type testkern_chi_2_type
+     procedure, public, nopass :: code => simple_with_scalars_code
+  end type simple_with_scalars_type
 
 contains
 
-  subroutine testkern_chi_2_code(nlayers,              &
-                                 chi1, chi2, chi3, f1, &
-                                 ndf_w0, undf_w0, map_w0)
+  subroutine simple_with_scalars_code()
+  end subroutine simple_with_scalars_code
 
-    implicit none
-
-    integer(kind=i_def), intent(in) :: nlayers
-    integer(kind=i_def), intent(in) :: ndf_w0, undf_w0
-    integer(kind=i_def), dimension(ndf_w0), intent(in) :: map_w0
-    real(kind=r_def), dimension(undf_w0),   intent(inout) :: chi1, chi2, chi3
-    real(kind=r_def), dimension(undf_w0),   intent(inout) :: f1
-
-  end subroutine testkern_chi_2_code
-
-end module testkern_chi_2_mod
+end module simple_with_scalars_mod

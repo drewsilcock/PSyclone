@@ -67,7 +67,7 @@ BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 @pytest.fixture(scope="module", autouse=True)
 def setup():
-    '''Make sure that all tests here use dynamo0.3 as API.'''
+    '''Make sure that all tests here use Dynamo0.3 as API.'''
     Config.get().api = "dynamo0.3"
 
 
@@ -4795,7 +4795,7 @@ def test_rc_vector_depth():
 
 
 def test_rc_vector_no_depth():
-    '''Test that the loop bounds for a (continuous) vector are modified
+    ''' Test that the loop bounds for a (continuous) vector are modified
     appropriately and set_clean() added correctly and halo_exchange
     added/modified appropriately after applying the redundant
     computation transformation with no halo depth value. '''
@@ -4806,7 +4806,7 @@ def test_rc_vector_no_depth():
     invoke = psy.invokes.invoke_list[0]
     schedule = invoke.schedule
     rc_trans = Dynamo0p3RedundantComputationTrans()
-    loop = schedule.children[1]
+    loop = schedule.children[5]
     schedule, _ = rc_trans.apply(loop)
     invoke.schedule = schedule
     result = str(psy.gen)

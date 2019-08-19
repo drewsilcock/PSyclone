@@ -44,8 +44,8 @@ program vector_field
 
   type(field_type) :: f1, chi(3)
 
-  call invoke(                    &
-       testkern_chi_type(chi, f1) &
+  call invoke(                      &
+       testkern_chi_2_type(chi, f1) &
        )
 
 end program vector_field

@@ -557,51 +557,51 @@ def test_two_identical_qr(tmpdir):
     assert expected_dealloc in gen_code
 
 
-def test_anyw2(tmpdir):
+def test_anyw2(dist_mem, tmpdir):
     ''' Check generated code works correctly when we have any_w2 fields
     and basis functions'''
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "21.2_single_invoke_multi_anyw2_basis.f90"),
         api="dynamo0.3")
-    for dist_mem in [False, True]:
-        psy = PSyFactory("dynamo0.3",
-                         distributed_memory=dist_mem).create(invoke_info)
-        generated_code = str(psy.gen)
-        print(generated_code)
 
-        assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+    psy = PSyFactory("dynamo0.3",
+                     distributed_memory=dist_mem).create(invoke_info)
+    generated_code = str(psy.gen)
+    print(generated_code)
 
-        output = (
-            "      ! Initialise number of DoFs for any_w2\n"
-            "      !\n"
-            "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
-            "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
-            "      !\n"
-            "      ! Look-up quadrature variables\n"
-            "      !\n"
-            "      qr_proxy = qr%get_quadrature_proxy()\n"
-            "      np_xy_qr = qr_proxy%np_xy\n"
-            "      np_z_qr = qr_proxy%np_z\n"
-            "      weights_xy_qr => qr_proxy%weights_xy\n"
-            "      weights_z_qr => qr_proxy%weights_z\n"
-            "      !\n"
-            "      ! Allocate basis/diff-basis arrays\n"
-            "      !\n"
-            "      dim_any_w2 = f1_proxy%vspace%get_dim_space()\n"
-            "      diff_dim_any_w2 = f1_proxy%vspace%"
-            "get_dim_space_diff()\n"
-            "      ALLOCATE (basis_any_w2_qr(dim_any_w2, ndf_any_w2, "
-            "np_xy_qr, np_z_qr))\n"
-            "      ALLOCATE (diff_basis_any_w2_qr(diff_dim_any_w2, "
-            "ndf_any_w2, np_xy_qr, np_z_qr))\n"
-            "      !\n"
-            "      ! Compute basis/diff-basis arrays\n"
-            "      !\n"
-            "      CALL qr%compute_function(BASIS, f1_proxy%vspace, "
-            "dim_any_w2, ndf_any_w2, basis_any_w2_qr)\n"
-            "      CALL qr%compute_function(DIFF_BASIS, f1_proxy%vspace, "
-            "diff_dim_any_w2, ndf_any_w2, diff_basis_any_w2_qr)")
-        assert output in generated_code
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    output = (
+        "      ! Initialise number of DoFs for any_w2\n"
+        "      !\n"
+        "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
+        "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
+        "      !\n"
+        "      ! Look-up quadrature variables\n"
+        "      !\n"
+        "      qr_proxy = qr%get_quadrature_proxy()\n"
+        "      np_xy_qr = qr_proxy%np_xy\n"
+        "      np_z_qr = qr_proxy%np_z\n"
+        "      weights_xy_qr => qr_proxy%weights_xy\n"
+        "      weights_z_qr => qr_proxy%weights_z\n"
+        "      !\n"
+        "      ! Allocate basis/diff-basis arrays\n"
+        "      !\n"
+        "      dim_any_w2 = f1_proxy%vspace%get_dim_space()\n"
+        "      diff_dim_any_w2 = f1_proxy%vspace%"
+        "get_dim_space_diff()\n"
+        "      ALLOCATE (basis_any_w2_qr(dim_any_w2, ndf_any_w2, "
+        "np_xy_qr, np_z_qr))\n"
+        "      ALLOCATE (diff_basis_any_w2_qr(diff_dim_any_w2, "
+        "ndf_any_w2, np_xy_qr, np_z_qr))\n"
+        "      !\n"
+        "      ! Compute basis/diff-basis arrays\n"
+        "      !\n"
+        "      CALL qr%compute_function(BASIS, f1_proxy%vspace, "
+        "dim_any_w2, ndf_any_w2, basis_any_w2_qr)\n"
+        "      CALL qr%compute_function(DIFF_BASIS, f1_proxy%vspace, "
+        "diff_dim_any_w2, ndf_any_w2, diff_basis_any_w2_qr)")
+    assert output in generated_code
 
 
 def test_qr_plus_eval(tmpdir):

@@ -45,7 +45,8 @@ module testkern_write_w2v_w1_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_write_w2v_w1_type
+  type, public, extends(kernel_type) :: testkern_write_w2v_w1_type
+     private
      type(arg_type), dimension(7) :: meta_args = (/ &
           arg_type(gh_field, gh_read,  w3),         &
           arg_type(gh_field, gh_read,  w0),         &
@@ -57,7 +58,7 @@ module testkern_write_w2v_w1_mod
           /)
      integer :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_write_w2v_w1_code
+     procedure, public, nopass :: code => testkern_write_w2v_w1_code
   end type testkern_write_w2v_w1_type
 
 contains

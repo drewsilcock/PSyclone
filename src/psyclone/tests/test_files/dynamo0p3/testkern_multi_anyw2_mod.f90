@@ -42,7 +42,8 @@ module testkern_multi_anyw2_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_multi_anyw2_type
+  type, public, extends(kernel_type) :: testkern_multi_anyw2_type
+     private
      type(arg_type), dimension(3) :: meta_args = (/ &
           arg_type(gh_field, gh_inc,  any_w2),      &
           arg_type(gh_field, gh_read, any_w2),      &

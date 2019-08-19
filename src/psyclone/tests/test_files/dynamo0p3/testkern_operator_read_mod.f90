@@ -42,17 +42,18 @@ module testkern_operator_read_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_operator_read_type
+  type, public, extends(kernel_type) :: testkern_operator_read_type
+     private
      type(arg_type), dimension(3) :: meta_args = (/ &
           arg_type(gh_operator, gh_read, w0, w0),   &
           arg_type(gh_field*3,  gh_inc,  w0),       &
           arg_type(gh_integer,  gh_read)            &
           /)
-     type(func_type) :: meta_funcs(1) =             &
-         (/ func_type(w0, gh_basis, gh_diff_basis)  &
+     type(func_type) :: meta_funcs(1) = (/          &
+          func_type(w0, gh_basis, gh_diff_basis)    &
           /)
-     integer, parameter :: iterates_over = cells
-     integer, parameter :: gh_shape = gh_quadrature_XYoZ
+     integer :: iterates_over = cells
+     integer :: gh_shape = gh_quadrature_XYoZ
    contains
      procedure, public, nopass :: code => testkern_operator_read_code
   end type testkern_operator_read_type

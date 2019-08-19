@@ -42,12 +42,13 @@ module simple_with_scalars_mod
 
   implicit none
 
-  type, extends(kernel_type) :: simple_with_scalars_type
+  type, public, extends(kernel_type) :: simple_with_scalars_type
+     private
      type(arg_type), dimension(3) :: meta_args = (/ &
           arg_type(gh_real,    gh_read),            &
           arg_type(gh_field,   gh_inc, w1),         &
           arg_type(gh_integer, gh_read) /)
-     integer, parameter :: iterates_over = cells
+     integer :: iterates_over = cells
    contains
      procedure, public, nopass :: code => simple_with_scalars_code
   end type simple_with_scalars_type

@@ -42,7 +42,8 @@ module testkern_w2_only_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_w2_only_type
+  type, public, extends(kernel_type) :: testkern_w2_only_type
+     private
      type(arg_type), dimension(2) :: meta_args = (/ &
           arg_type(gh_field, gh_inc,  w2),          &
           arg_type(gh_field, gh_read, w2)           &

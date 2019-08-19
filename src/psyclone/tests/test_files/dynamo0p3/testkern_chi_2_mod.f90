@@ -44,6 +44,7 @@ module testkern_chi_2_mod
   implicit none
 
   type, public, extends(kernel_type) :: testkern_chi_2_type
+     private
      type(arg_type), dimension(2) :: meta_args = (/ &
           arg_type(gh_field*3, gh_inc, w0),         &
           arg_type(gh_field,   gh_inc, w0)          &

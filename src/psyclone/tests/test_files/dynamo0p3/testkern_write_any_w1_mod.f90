@@ -45,7 +45,8 @@ module testkern_write_any_w1_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_write_any_w1_type
+  type, public, extends(kernel_type) :: testkern_write_any_w1_type
+     private
      type(arg_type), dimension(7) :: meta_args = (/ &
           arg_type(gh_field, gh_inc, any_space_1),  &
           arg_type(gh_field, gh_read, w2),          &
@@ -55,7 +56,7 @@ module testkern_write_any_w1_mod
           arg_type(gh_field, gh_read, w2h),         &
           arg_type(gh_field, gh_read, w2v)          &
            /)
-     integer, parameter :: iterates_over = cells
+     integer :: iterates_over = cells
    contains
      procedure, public, nopass :: code => testkern_write_any_w1_code
   end type testkern_write_any_w1_type

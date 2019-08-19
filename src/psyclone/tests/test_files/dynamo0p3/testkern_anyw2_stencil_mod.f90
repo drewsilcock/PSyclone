@@ -42,13 +42,14 @@ module testkern_anyw2_stencil_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_anyw2_stencil_type
+  type, public, extends(kernel_type) :: testkern_anyw2_stencil_type
+     private
      type(arg_type), dimension(3) :: meta_args = (/            &
           arg_type(gh_field, gh_inc,  any_w2),                 &
           arg_type(gh_field, gh_read, any_w2, stencil(cross)), &
           arg_type(gh_field, gh_read, any_w2, stencil(cross))  &
           /)
-     integer, parameter :: iterates_over = cells
+     integer :: iterates_over = cells
    contains
      procedure, public, nopass :: code => testkern_anyw2_stencil_code
   end type testkern_anyw2_stencil_type

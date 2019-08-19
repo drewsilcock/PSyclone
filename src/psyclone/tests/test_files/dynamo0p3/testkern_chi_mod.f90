@@ -42,13 +42,14 @@ module testkern_chi_mod
 
   implicit none
 
-  type, extends(kernel_type) :: testkern_chi_type
+  type, public, extends(kernel_type) :: testkern_chi_type
+     private
      type(arg_type), dimension(3) :: meta_args = (/ &
           arg_type(gh_field,   gh_inc,  w0),        &
           arg_type(gh_field*3, gh_inc,  w0),        &
           arg_type(gh_field,   gh_read, w0)         &
           /)
-     integer, parameter :: iterates_over = cells
+     integer :: iterates_over = cells
    contains
      procedure, public, nopass :: code => testkern_chi_code
   end type testkern_chi_type

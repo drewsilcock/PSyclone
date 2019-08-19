@@ -1,7 +1,7 @@
 ! -----------------------------------------------------------------------------
 ! BSD 3-Clause License
 !
-! Copyright (c) 2017, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
 ! All rights reserved.
 !
 ! Redistribution and use in source and binary forms, with or without
@@ -18,36 +18,70 @@
 !   contributors may be used to endorse or promote products derived from
 !   this software without specific prior written permission.
 !
-! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-! DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-! FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-! DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-! SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+! "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+! LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+! FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+! COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+! INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+! BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+! LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+! LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Author R. W. Ford STFC Daresbury Lab
+! Author R. W. Ford, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
 module testkern_stencil_mod
+
+  use constants_mod
   use argument_mod
   use kernel_mod
-  use constants_mod
-  type, extends(kernel_type) :: testkern_stencil_type
-     type(arg_type), dimension(4) :: meta_args =             &
-          (/ arg_type(gh_field,gh_write,w1),                 &
-             arg_type(gh_field,gh_read, w2, stencil(cross)), &
-             arg_type(gh_field,gh_read, w2),                 &
-             arg_type(gh_field,gh_read, w3)                  &
-           /)
+
+  implicit none
+
+  type, public, extends(kernel_type) :: testkern_stencil_type
+     private
+     type(arg_type), dimension(4) :: meta_args = (/        &
+          arg_type(gh_field, gh_inc,  w1),                 &
+          arg_type(gh_field, gh_read, w2, stencil(cross)), &
+          arg_type(gh_field, gh_read, w2),                 &
+          arg_type(gh_field, gh_read, w3)                  &
+          /)
      integer :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_stencil_code
+     procedure, public, nopass :: code => testkern_stencil_code
   end type testkern_stencil_type
 contains
 
-  subroutine testkern_stencil_code()
+  subroutine testkern_stencil_code(nlayers,                 &
+                                   fld1,                    &
+                                   fld2, fld2_stencil_size, &
+                                   fld2_stencil_dofmap,     &
+                                   fld3, fld4,              &
+                                   ndf_w1, undf_w1, map_w1, &
+                                   ndf_w2, undf_w2, map_w2, &
+                                   ndf_w3, undf_w3, map_w3)
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_w1
+    integer(kind=i_def), intent(in) :: ndf_w2
+    integer(kind=i_def), intent(in) :: ndf_w3
+    integer(kind=i_def), intent(in) :: undf_w1, undf_w2, undf_w3
+    integer(kind=i_def), intent(in) :: fld2_stencil_size
+    integer(kind=i_def), intent(in), dimension(ndf_w1) :: map_w1
+    integer(kind=i_def), intent(in), dimension(ndf_w2) :: map_w2
+    integer(kind=i_def), intent(in), dimension(ndf_w3) :: map_w3
+    integer(kind=i_def), intent(in), dimension(ndf_w2,fld2_stencil_size) :: fld2_stencil_dofmap
+    real(kind=r_def), intent(inout), dimension(undf_w1) :: fld1
+    real(kind=r_def), intent(in), dimension(undf_w2) :: fld2
+    real(kind=r_def), intent(in), dimension(undf_w2) :: fld3
+    real(kind=r_def), intent(in), dimension(undf_w3) :: fld4
+
   end subroutine testkern_stencil_code
+
 end module testkern_stencil_mod

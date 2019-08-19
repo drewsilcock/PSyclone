@@ -9,7 +9,7 @@ generator. This particular example defines a Kernel with four fields,
 
 To run this example type:
 
-python ../../src/genkernelstub.py testkern_stencil_multi_mod.f90
+genkernelstub testkern_stencil_multi_mod.f90
 
 More Kernel examples can be found in the following directory, most of
 which start wth the name "testkern"
@@ -18,4 +18,4 @@ which start wth the name "testkern"
 
 For example:
 
-python ../../src/genkernelstub.py ../../src/tests/test_files/dynamo0p3/testkern_qr.F90
+genkernelstub ../../src/tests/test_files/dynamo0p3/testkern_qr.F90

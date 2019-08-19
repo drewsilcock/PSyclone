@@ -53,7 +53,7 @@ module testkern
           /)
      integer :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_code
+     procedure, public, nopass :: code => testkern_code
   end type testkern_type
 
 contains

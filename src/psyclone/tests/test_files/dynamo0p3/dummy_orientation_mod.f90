@@ -31,8 +31,8 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Author R. W. Ford STFC Daresbury Lab
-! Modified I. Kavcic Met Office
+! Author R. W. Ford, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
 module dummy_orientation_mod
 
@@ -91,7 +91,7 @@ contains
     integer(kind=i_def), intent(in), dimension(ndf_w2) :: orientation_w2
     integer(kind=i_def), intent(in), dimension(ndf_w3) :: orientation_w3
     real(kind=r_def), intent(inout), dimension(undf_w0) :: field1
-    real(kind=r_def), intent(in), dimension(undf_w2) :: field2
+    real(kind=r_def), intent(in), dimension(undf_w2)    :: field2
     real(kind=r_def), intent(inout), dimension(ndf_w1,ndf_w1,ncell_3d_op1) :: op1
     real(kind=r_def), intent(out), dimension(ndf_w3,ndf_w3,ncell_3d_op2) :: op2
 

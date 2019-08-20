@@ -1879,7 +1879,7 @@ def test_setval_X(tmpdir, monkeypatch, annexed, dist_mem):
 # ------------- Inner product of fields ------------------------------------- #
 
 
-def test_X_innerproduct_Y(tmpdir, dist_mem):
+def test_X_innerproduct_Y(dist_mem):
     ''' Test that 1) the str method of DynXInnerproductYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which calculates inner product of fields X and Y as
@@ -1944,10 +1944,8 @@ def test_X_innerproduct_Y(tmpdir, dist_mem):
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
         assert "      TYPE(scalar_type) global_sum\n" in code
 
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-
-def test_X_innerproduct_X(tmpdir, dist_mem):
+def test_X_innerproduct_X(dist_mem):
     ''' Test that 1) the str method of DynXInnerproductXKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which calculates inner product of a field X by itself as
@@ -2011,13 +2009,11 @@ def test_X_innerproduct_X(tmpdir, dist_mem):
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
         assert "      TYPE(scalar_type) global_sum\n" in code
 
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
-
 
 # ------------- Sum field elements ------------------------------------------ #
 
 
-def test_sum_X(tmpdir, dist_mem):
+def test_sum_X(dist_mem):
     ''' Test that 1) the str method of DynSumXKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which sums elements of a field X as sumfld = sum(X(:)) '''
@@ -2072,8 +2068,6 @@ def test_sum_X(tmpdir, dist_mem):
             "      asum = global_sum%get_sum()")
         assert output in code
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
-
-    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 
 # ------------- Xfail builtins ---------------------------------------------- #

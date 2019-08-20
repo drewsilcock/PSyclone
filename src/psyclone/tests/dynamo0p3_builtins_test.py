@@ -419,7 +419,7 @@ def test_X_plus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 
-def test_inc_X_plus_Y(monkeypatch, annexed, dist_mem):
+def test_inc_X_plus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXPlusYKern returns the
     expected string and 2) we generate correct code for the built-in X
     = X + Y where X and Y are fields. Test with and without annexed
@@ -467,8 +467,10 @@ def test_inc_X_plus_Y(monkeypatch, annexed, dist_mem):
             output = output.replace("dof_annexed", "dof_owned")
         assert output in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_aX_plus_Y(monkeypatch, annexed, dist_mem):
+
+def test_aX_plus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynAXPlusYKern returns the expected
     string and 2) we generate correct code for the built-in operation
     Z = a*X + Y where 'a' is a scalar and Z, X and Y are fields. Test
@@ -539,8 +541,10 @@ def test_aX_plus_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_aX_plus_Y(monkeypatch, annexed, dist_mem):
+
+def test_inc_aX_plus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncAXPlusYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = a*X + Y where 'a' is a scalar and X and Y are
@@ -609,8 +613,10 @@ def test_inc_aX_plus_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_X_plus_bY(monkeypatch, annexed, dist_mem):
+
+def test_inc_X_plus_bY(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXPlusBYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X + b*Y where 'b' is a scalar and X and Y are
@@ -679,8 +685,10 @@ def test_inc_X_plus_bY(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_aX_plus_bY(monkeypatch, annexed, dist_mem):
+
+def test_aX_plus_bY(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynAXPlusBYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation Z = a*X + b*Y where 'a' and 'b' are scalars and Z, X and
@@ -750,8 +758,10 @@ def test_aX_plus_bY(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_aX_plus_bY(monkeypatch, annexed, dist_mem):
+
+def test_inc_aX_plus_bY(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncAXPlusBYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = a*X + b*Y where 'a' and 'b' are scalars and X and Y
@@ -821,11 +831,13 @@ def test_inc_aX_plus_bY(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Subtracting (scaled) fields --------------------------------- #
 
 
-def test_X_minus_Y(monkeypatch, annexed, dist_mem):
+def test_X_minus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynXMinusYKern returns the expected
     string and 2) we generate correct code for the built-in operation
     Z = X - Y where Z, X and Y are fields. Test with and without
@@ -883,8 +895,10 @@ def test_X_minus_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_X_minus_Y(monkeypatch, annexed, dist_mem):
+
+def test_inc_X_minus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXMinusYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X - Y where X and Y are fields. Test with and
@@ -938,8 +952,10 @@ def test_inc_X_minus_Y(monkeypatch, annexed, dist_mem):
             output = output.replace("dof_annexed", "dof_owned")
         assert output in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_aX_minus_Y(monkeypatch, annexed, dist_mem):
+
+def test_aX_minus_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynAXMinusYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation Z = a*X - Y where 'a' is a scalar and Z, X and Y are
@@ -1009,8 +1025,10 @@ def test_aX_minus_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_X_minus_bY(monkeypatch, annexed, dist_mem):
+
+def test_X_minus_bY(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynXMinusBYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation Z = X - b*Y where 'b' is a scalar and Z, X and Y are
@@ -1080,8 +1098,10 @@ def test_X_minus_bY(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_X_minus_bY(monkeypatch, annexed, dist_mem):
+
+def test_inc_X_minus_bY(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXMinusBYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X - b*Y where 'b' is a scalar and X and Y are
@@ -1150,11 +1170,13 @@ def test_inc_X_minus_bY(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Multiplying (scaled) fields --------------------------------- #
 
 
-def test_X_times_Y(monkeypatch, annexed, dist_mem):
+def test_X_times_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynXTimesYKern returns the expected
     string and 2) we generate correct code for the built-in operation
     Z = X*Y where Z, X and Y are fields. Test with and without annexed
@@ -1217,8 +1239,10 @@ def test_X_times_Y(monkeypatch, annexed, dist_mem):
             output = output.replace("dof_annexed", "dof_owned")
         assert output in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_X_times_Y(monkeypatch, annexed, dist_mem):
+
+def test_inc_X_times_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXTimesYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X*Y where X and Y are fields. Test with and without
@@ -1276,8 +1300,10 @@ def test_inc_X_times_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_aX_times_Y(monkeypatch, annexed, dist_mem):
+
+def test_inc_aX_times_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncAXTimesYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = a*X*Y where 'a' is a scalar and X and Y are
@@ -1346,11 +1372,13 @@ def test_inc_aX_times_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Scaling fields (multiplying by a scalar --------------------- #
 
 
-def test_a_times_X(monkeypatch, annexed, dist_mem):
+def test_a_times_X(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynATimesXKern returns the expected
     string and 2) we generate correct code for the built-in operation
     Y = a*X where 'a' is a scalar and X and Y are fields. Test with
@@ -1406,8 +1434,10 @@ def test_a_times_X(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_a_times_X(monkeypatch, annexed, dist_mem):
+
+def test_inc_a_times_X(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncATimesXKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = a*X where 'a' is a scalar and X is a field. Test
@@ -1477,11 +1507,13 @@ def test_inc_a_times_X(monkeypatch, annexed, dist_mem):
             output = output.replace("dof_annexed", "dof_owned")
         assert output in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Dividing (scaled) fields ------------------------------------ #
 
 
-def test_X_divideby_Y(monkeypatch, annexed, dist_mem):
+def test_X_divideby_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynXDividebyYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation Z = X/Y where Z, X and Y are fields. Test with and
@@ -1539,8 +1571,10 @@ def test_X_divideby_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_inc_X_divideby_Y(monkeypatch, annexed, dist_mem):
+
+def test_inc_X_divideby_Y(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXDividebyYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X/Y where X and Y are fields. Test with and without
@@ -1596,11 +1630,13 @@ def test_inc_X_divideby_Y(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Raising field to a scalar ----------------------------------- #
 
 
-def test_inc_X_powreal_a(monkeypatch, annexed, dist_mem):
+def test_inc_X_powreal_a(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynIncXPowrealAKern returns the
     expected string and 2) we generate correct code for the built-in
     operation X = X**a where 'a' is a real scalar and X is a
@@ -1648,6 +1684,8 @@ def test_inc_X_powreal_a(monkeypatch, annexed, dist_mem):
         if not annexed:
             output = output.replace("dof_annexed", "dof_owned")
         assert output in code
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 
 def test_inc_X_powint_n(tmpdir, monkeypatch, annexed, dist_mem):
@@ -1706,7 +1744,7 @@ def test_inc_X_powint_n(tmpdir, monkeypatch, annexed, dist_mem):
 # ------------- Setting field elements to a value --------------------------- #
 
 
-def test_setval_c(monkeypatch, annexed, dist_mem):
+def test_setval_c(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynSetvalCKern returns the expected
     string and 2) we generate correct code for the built-in operation
     X = c where 'c' is a constant scalar value and X is a field. Test
@@ -1769,8 +1807,10 @@ def test_setval_c(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_setval_X(monkeypatch, annexed, dist_mem):
+
+def test_setval_X(tmpdir, monkeypatch, annexed, dist_mem):
     '''Test that 1) the str method of DynSetvalXKern returns the expected
     string and 2) we generate correct code for the built-in operation
     Y = X where X and Y are fields. Also test with and without annexed
@@ -1833,11 +1873,13 @@ def test_setval_X(monkeypatch, annexed, dist_mem):
         print(output_dm_2)
         assert output_dm_2 in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Inner product of fields ------------------------------------- #
 
 
-def test_X_innerproduct_Y(dist_mem):
+def test_X_innerproduct_Y(tmpdir, dist_mem):
     ''' Test that 1) the str method of DynXInnerproductYKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which calculates inner product of fields X and Y as
@@ -1902,8 +1944,10 @@ def test_X_innerproduct_Y(dist_mem):
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
         assert "      TYPE(scalar_type) global_sum\n" in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-def test_X_innerproduct_X(dist_mem):
+
+def test_X_innerproduct_X(tmpdir, dist_mem):
     ''' Test that 1) the str method of DynXInnerproductXKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which calculates inner product of a field X by itself as
@@ -1967,11 +2011,13 @@ def test_X_innerproduct_X(dist_mem):
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
         assert "      TYPE(scalar_type) global_sum\n" in code
 
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
 
 # ------------- Sum field elements ------------------------------------------ #
 
 
-def test_sum_X(dist_mem):
+def test_sum_X(tmpdir, dist_mem):
     ''' Test that 1) the str method of DynSumXKern returns the
     expected string and 2) we generate correct code for the built-in
     operation which sums elements of a field X as sumfld = sum(X(:)) '''
@@ -2026,6 +2072,8 @@ def test_sum_X(dist_mem):
             "      asum = global_sum%get_sum()")
         assert output in code
         assert "      REAL(KIND=r_def), intent(out) :: asum\n" in code
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 
 # ------------- Xfail builtins ---------------------------------------------- #

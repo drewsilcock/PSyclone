@@ -1,7 +1,7 @@
 ! -----------------------------------------------------------------------------
 ! BSD 3-Clause License
 !
-! Copyright (c) 2017, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
 ! All rights reserved.
 !
 ! Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,18 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Author I. Kavcic Met Office
+! Author I. Kavcic, Met Office
 
 program single_invoke
 
   ! Description: single point-wise operation (DoF-wise multiplication
   ! X = a*X*Y) specified in an invoke call.
-  use testkern, only: testkern_type
-  use inf,      only: field_type
+  use inf, only: field_type
+
   implicit none
+
   type(field_type) :: f1, f2
-  real(r_def) :: a
+  real(r_def)      :: a
 
   a = 0.5
 

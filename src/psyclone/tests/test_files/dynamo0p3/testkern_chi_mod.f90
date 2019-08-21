@@ -31,21 +31,49 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Author A. R. Porter, STFC Daresbury Lab
+! Author R. W. Ford, STFC Daresbury Lab
 ! Modified I. Kavcic, Met Office
 
-program vector_field
+module testkern_chi_mod
 
-  ! Description: vector field obtained by de-referencing a derived type
-  ! passed as an argument
-  use testkern_chi_mod, only: testkern_chi_type
-  use inf,              only: field_type
+  use constants_mod
+  use argument_mod
+  use kernel_mod
 
   implicit none
 
-  type(field_type)           :: f1, f2
-  type(field_container_type) :: box
+  type, public, extends(kernel_type) :: testkern_chi_type
+     private
+     type(arg_type), dimension(3) :: meta_args = (/ &
+          arg_type(gh_field,   gh_inc,  w0),        &
+          arg_type(gh_field*3, gh_inc,  w0),        &
+          arg_type(gh_field,   gh_read, w0)         &
+          /)
+     integer :: iterates_over = cells
+   contains
+     procedure, public, nopass :: code => testkern_chi_code
+  end type testkern_chi_type
 
-  call invoke( testkern_chi_type(f1, box%chi, f2) )
+contains
 
-end program vector_field
+  subroutine testkern_chi_code(nlayers,                   &
+                               fld1,                      &
+                               fld2_v1, fld2_v2, fld2_v3, &
+                               fld3,                      &
+                               ndf_w0, undf_w0, map_w0)
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_w0
+    integer(kind=i_def), intent(in) :: undf_w0
+    integer(kind=i_def), intent(in), dimension(ndf_w0) :: map_w0
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: fld1
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: fld2_v1
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: fld2_v2
+    real(kind=r_def), intent(inout), dimension(undf_w0) :: fld2_v3
+    real(kind=r_def), intent(in), dimension(undf_w0)    :: fld3
+
+  end subroutine testkern_chi_code
+
+end module testkern_chi_mod

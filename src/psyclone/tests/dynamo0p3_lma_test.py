@@ -59,13 +59,13 @@ TEST_API = "dynamo0.3"
 CODE = '''
 module testkern_qr
   type, extends(kernel_type) :: testkern_qr_type
-     type(arg_type), meta_args(6) =                 &
-          (/ arg_type(gh_real, gh_read),            &
-             arg_type(gh_field,gh_write,w1),        &
-             arg_type(gh_field,gh_read, w2),        &
-             arg_type(gh_operator,gh_read, w2, w2), &
-             arg_type(gh_field,gh_read, w3),        &
-             arg_type(gh_integer, gh_read)          &
+     type(arg_type), meta_args(6) =                  &
+          (/ arg_type(gh_real, gh_read),             &
+             arg_type(gh_field, gh_inc, w1),         &
+             arg_type(gh_field, gh_read, w2),        &
+             arg_type(gh_operator, gh_read, w2, w2), &
+             arg_type(gh_field, gh_read, w3),        &
+             arg_type(gh_integer, gh_read)           &
            /)
      type(func_type), dimension(3) :: meta_funcs =  &
           (/ func_type(w1, gh_basis),               &
@@ -75,7 +75,7 @@ module testkern_qr
      integer, parameter :: iterates_over = cells
      integer, parameter :: gh_shape = gh_quadrature_XYoZ
    contains
-     procedure() :: code => testkern_qr_code
+     procedure, nopass :: code => testkern_qr_code
   end type testkern_qr_type
 contains
   subroutine testkern_qr_code(a,b,c,d)
@@ -102,8 +102,8 @@ def test_get_op_wrong_name():
 def test_ad_op_type_too_few_args():
     ''' Tests that an error is raised when the operator descriptor
     metadata has fewer than 4 args. '''
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_read, w2)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_read, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -114,8 +114,8 @@ def test_ad_op_type_too_few_args():
 def test_ad_op_type_too_many_args():
     ''' Tests that an error is raised when the operator descriptor
     metadata has more than 4 args. '''
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_read, w2, w2, w2)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_read, w2, w2, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -126,8 +126,8 @@ def test_ad_op_type_too_many_args():
 def test_ad_op_type_wrong_3rd_arg():
     ''' Tests that an error is raised when the 3rd entry in the operator
     descriptor metadata is invalid. '''
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_read, woops, w2)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_read, woops, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -139,8 +139,8 @@ def test_ad_op_type_wrong_3rd_arg():
 def test_ad_op_type_1st_arg_not_space():
     ''' Tests that an error is raised when the operator descriptor
     metadata contains something that is not a valid space. '''
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_read, wbroke, w2)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_read, wbreak, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -151,8 +151,8 @@ def test_ad_op_type_1st_arg_not_space():
 
 def test_ad_op_type_wrong_access():
     ''' Test that an error is raised if an operator has gh_inc access. '''
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_inc, w2, w2)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_inc, w2, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -616,16 +616,17 @@ def test_operator_read_level1_halo():
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     schedule = psy.invokes.invoke_list[0].schedule
-    loop = schedule.children[0]
+    loop = schedule.children[3]
     # Modify the loop bound so that we attempt to read from the L2 halo
     # (of the operator)
     loop.set_upper_bound("cell_halo", index=2)
     # Attempt to generate the code
     with pytest.raises(GenerationError) as excinfo:
         _ = psy.gen
-    assert ("Kernel 'testkern_operator_code' reads from an operator and "
-            "therefore cannot be used for cells beyond the level 1 halo. "
-            "However the containing loop goes out to level 2" in str(excinfo))
+    assert ("Kernel 'testkern_operator_code' reads from an operator "
+            "and therefore cannot be used for cells beyond the level 1 "
+            "halo. However the containing loop goes out to level 2"
+            in str(excinfo))
 
 
 def test_operator_bc_kernel(tmpdir):
@@ -734,7 +735,7 @@ module dummy_mod
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy_code
+     procedure, nopass :: code => dummy_code
   end type dummy_type
 contains
   subroutine dummy_code()
@@ -803,12 +804,12 @@ def test_arg_descriptor_op_str():
 OPERATOR_DIFFERENT_SPACES = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
-     type(arg_type), meta_args(1) =    &
-          (/ arg_type(gh_operator,gh_write, w0, w1) &
+     type(arg_type), meta_args(1) =                  &
+          (/ arg_type(gh_operator, gh_write, w0, w1) &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy_code
+     procedure, nopass :: code => dummy_code
   end type dummy_type
 contains
   subroutine dummy_code()

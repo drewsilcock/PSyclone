@@ -88,13 +88,13 @@ def test_get_op_orientation_name():
 CODE = '''
 module testkern_qr
   type, extends(kernel_type) :: testkern_qr_type
-     type(arg_type), meta_args(6) =                 &
-          (/ arg_type(gh_real, gh_read),            &
-             arg_type(gh_field,gh_write,w1),        &
-             arg_type(gh_field,gh_read, w2),        &
-             arg_type(gh_operator,gh_read, w2, w2), &
-             arg_type(gh_field,gh_read, w3),        &
-             arg_type(gh_integer, gh_read)          &
+     type(arg_type), meta_args(6) =                  &
+          (/ arg_type(gh_real, gh_read),             &
+             arg_type(gh_field, gh_inc, w1),         &
+             arg_type(gh_field, gh_read, w2),        &
+             arg_type(gh_operator, gh_read, w2, w2), &
+             arg_type(gh_field, gh_read, w3),        &
+             arg_type(gh_integer, gh_read)           &
            /)
      type(func_type), dimension(3) :: meta_funcs =  &
           (/ func_type(w1, gh_basis),               &
@@ -104,10 +104,10 @@ module testkern_qr
      integer, parameter :: iterates_over = cells
      integer, parameter :: gh_shape = gh_quadrature_XYoZ
    contains
-     procedure() :: code => testkern_qr_code
+     procedure, nopass :: code => testkern_qr_code
   end type testkern_qr_type
 contains
-  subroutine testkern_qr_code(a,b,c,d)
+  subroutine testkern_qr_code(a, b, c, d)
   end subroutine testkern_qr_code
 end module testkern_qr
 '''
@@ -119,8 +119,8 @@ def test_arg_descriptor_wrong_type():
     ''' Tests that an error is raised when the argument descriptor
     metadata is not of type arg_type. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                        "arg_typ(gh_field,gh_read, w2)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                        "arg_typ(gh_field, gh_read, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -133,7 +133,8 @@ def test_arg_descriptor_vector_str():
     ''' Test the str method of an argument descriptor containing a vector '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     # Change the meta-data so that the second argument is a vector
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*3,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc,  w1",
+                        "gh_field*3, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     dkm = DynKernMetadata(ast, name=name)
@@ -141,7 +142,7 @@ def test_arg_descriptor_vector_str():
     expected = (
         "DynArgDescriptor03 object\n"
         "  argument_type[0]='gh_field'*3\n"
-        "  access_descriptor[1]='gh_write'\n"
+        "  access_descriptor[1]='gh_inc'\n"
         "  function_space[2]='w1'")
     assert expected in dkm_str
 
@@ -224,8 +225,8 @@ def test_ad_field_type_too_few_args():
     ''' Tests that an error is raised when the argument descriptor
     metadata for a field has fewer than 3 args. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_field,gh_write)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_field, gh_inc)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -238,8 +239,8 @@ def test_ad_fld_type_too_many_args():
     ''' Tests that an error is raised when the argument descriptor
     metadata has more than 4 args. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_field,gh_write,w1,w1,w2)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_field, gh_inc, w1, w1, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -252,8 +253,8 @@ def test_ad_fld_type_1st_arg():
     ''' Tests that an error is raised when the 1st argument is
     invalid'''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_hedge,gh_write,w1)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_hedge, gh_inc, w1)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -291,7 +292,8 @@ def test_arg_descriptor_invalid_fs1():
     ''' Tests that an error is raised when an invalid function space
     name is provided as the third argument. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_read, w3", "gh_field,gh_read, w4", 1)
+    code = CODE.replace("gh_field, gh_read, w3",
+                        "gh_field, gh_read, w4", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -315,7 +317,8 @@ def test_invalid_vector_operator():
     ''' Tests that an error is raised when a vector does not use "*"
     as its operator. '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field+3,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1",
+                        "gh_field+3, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -327,7 +330,8 @@ def test_invalid_vector_value_type():
     ''' Tests that an error is raised when a vector value is not a valid
     integer '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*n,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1",
+                        "gh_field*n, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -339,7 +343,8 @@ def test_invalid_vector_value_range():
     ''' Tests that an error is raised when a vector value is not a valid
     value (<2) '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("gh_field,gh_write,w1", "gh_field*1,gh_write,w1", 1)
+    code = CODE.replace("gh_field, gh_inc, w1",
+                        "gh_field*1, gh_inc, w1", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -2155,13 +2160,13 @@ def test_kernel_datatype_not_found():
 STENCIL_CODE = '''
 module stencil_mod
   type, extends(kernel_type) :: stencil_type
-     type(arg_type), meta_args(2) =          &
-          (/ arg_type(gh_field,gh_write,w1), &
-             arg_type(gh_field,gh_read, w2, stencil(cross)) &
+     type(arg_type), meta_args(2) =                          &
+          (/ arg_type(gh_field, gh_inc,  w1),                &
+             arg_type(gh_field, gh_read, w2, stencil(cross)) &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => stencil_code
+     procedure, nopass :: code => stencil_code
   end type stencil_type
 contains
   subroutine stencil_code()
@@ -2186,8 +2191,8 @@ def test_field_metadata_too_many_arguments():
     '''Check that we raise an exception if more than 4 arguments are
     provided in the metadata for a gh_field arg_type.'''
     result = STENCIL_CODE.replace(
-        "gh_field,gh_read, w2, stencil(cross)",
-        "gh_field,gh_read, w2, stencil(cross), w1", 1)
+        "gh_field, gh_read, w2, stencil(cross)",
+        "gh_field, gh_read, w2, stencil(cross), w1", 1)
     ast = fpapi.parse(result, ignore_comments=False)
     with pytest.raises(ParseError) as excinfo:
         _ = DynKernMetadata(ast)
@@ -2505,7 +2510,7 @@ def test_arg_descriptor_fld_str():
     expected_output = (
         "DynArgDescriptor03 object\n"
         "  argument_type[0]='gh_field'\n"
-        "  access_descriptor[1]='gh_write'\n"
+        "  access_descriptor[1]='gh_inc'\n"
         "  function_space[2]='w1'")
     assert expected_output in result
 
@@ -3039,7 +3044,7 @@ def test_stencil_read_only():
     accessed as gh_read'''
     fparser.logging.disable(fparser.logging.CRITICAL)
     code = STENCIL_CODE.replace("gh_read, w2, stencil(cross)",
-                                "gh_write, w2, stencil(cross)", 1)
+                                "gh_inc, w2, stencil(cross)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     with pytest.raises(ParseError) as excinfo:
         _ = DynKernMetadata(ast, name="stencil_type")
@@ -3051,8 +3056,8 @@ def test_fs_discontinuous_and_inc_error():
     and gh_inc are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in DISCONTINUOUS_FUNCTION_SPACES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w3)",
-                            "arg_type(gh_field,gh_inc, " +
+        code = CODE.replace("arg_type(gh_field, gh_read, w3)",
+                            "arg_type(gh_field, gh_inc, " +
                             fspace + ")", 1)
         ast = fpapi.parse(code, ignore_comments=False)
         with pytest.raises(ParseError) as excinfo:
@@ -3067,8 +3072,8 @@ def test_fs_continuous_and_readwrite_error():
     gh_readwrite are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in CONTINUOUS_FUNCTION_SPACES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                            "arg_type(gh_field,gh_readwrite, " +
+        code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                            "arg_type(gh_field, gh_readwrite, " +
                             fspace + ")", 1)
         ast = fpapi.parse(code, ignore_comments=False)
         with pytest.raises(ParseError) as excinfo:
@@ -3083,8 +3088,8 @@ def test_fs_anyspace_and_readwrite_error():
     gh_readwrite are provided for the same field in the metadata '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     for fspace in VALID_ANY_SPACE_NAMES:
-        code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                            "arg_type(gh_field,gh_readwrite, " +
+        code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                            "arg_type(gh_field, gh_readwrite, " +
                             fspace + ")", 1)
         ast = fpapi.parse(code, ignore_comments=False)
         with pytest.raises(ParseError) as excinfo:
@@ -3285,7 +3290,7 @@ def test_field_gh_sum_invalid():
     ''' Tests that an error is raised when a field is specified with
     access type gh_sum '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_read, w2)",
+    code = CODE.replace("arg_type(gh_field, gh_read, w2)",
                         "arg_type(gh_field, gh_sum, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
@@ -3300,7 +3305,7 @@ def test_operator_gh_sum_invalid():
     ''' Tests that an error is raised when an operator is specified with
     access type gh_sum '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
                         "arg_type(gh_operator, gh_sum, w2, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
@@ -4813,8 +4818,8 @@ def test_no_updated_args():
     ''' Check that we raise the expected exception when we encounter a
     kernel that does not write to any of its arguments '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_write,w1)",
-                        "arg_type(gh_field,gh_read,w1)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_inc, w1)",
+                        "arg_type(gh_field, gh_read, w1)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     with pytest.raises(ParseError) as excinfo:
@@ -4837,7 +4842,7 @@ module testkern
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => testkern_code
+     procedure, nopass :: code => testkern_code
   end type testkern_type
 contains
   subroutine testkern_code(a,b)
@@ -4857,8 +4862,8 @@ def test_multiple_updated_field_args():
     ''' Check that we successfully parse a kernel that writes to more
     than one of its field arguments '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_field,gh_read, w2)",
-                        "arg_type(gh_field,gh_write, w1)", 1)
+    code = CODE.replace("arg_type(gh_field, gh_read, w2)",
+                        "arg_type(gh_field, gh_inc, w2)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     metadata = DynKernMetadata(ast, name=name)
@@ -4874,8 +4879,8 @@ def test_multiple_updated_op_args():
     ''' Check that we successfully parse the metadata for a kernel that
     writes to more than one of its field and operator arguments '''
     fparser.logging.disable(fparser.logging.CRITICAL)
-    code = CODE.replace("arg_type(gh_operator,gh_read, w2, w2)",
-                        "arg_type(gh_operator,gh_write, w1, w1)", 1)
+    code = CODE.replace("arg_type(gh_operator, gh_read, w2, w2)",
+                        "arg_type(gh_operator, gh_write, w1, w1)", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     name = "testkern_qr_type"
     metadata = DynKernMetadata(ast, name=name)

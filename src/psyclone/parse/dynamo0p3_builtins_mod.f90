@@ -116,12 +116,12 @@ module dynamo0p3_builtins_mod
   !> field3 = scalar1*field1 + scalar2*field2
   type, public, extends(kernel_type) :: aX_plus_bY
      private
-     type(arg_type) :: meta_args(5) = (/                             &
-          arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1),                 &
-          arg_type(GH_REAL,  GH_READ              ),                 &
-          arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1),                 &
-          arg_type(GH_REAL,  GH_READ              ),                 &
-          arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1)                  &
+     type(arg_type) :: meta_args(5) = (/                              &
+          arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1),                  &
+          arg_type(GH_REAL,  GH_READ              ),                  &
+          arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1),                  &
+          arg_type(GH_REAL,  GH_READ              ),                  &
+          arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1)                   &
           /)
      integer :: iterates_over = DOFS
    contains
@@ -349,7 +349,7 @@ module dynamo0p3_builtins_mod
      private
      type(arg_type) :: meta_args(2) = (/                              &
           arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1),                  &
-          arg_type(GH_REAL,  GH_READ             )                    &
+          arg_type(GH_REAL,  GH_READ              )                   &
           /)
      integer :: iterates_over = DOFS
    contains

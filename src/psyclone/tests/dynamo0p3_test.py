@@ -5154,86 +5154,93 @@ def test_kerncallarglist_args_error(dist_mem):
         "the arglist() method") in str(excinfo.value)
 
 
-def test_multi_anyw2():
-    '''Check generated code works correctly when we have multiple any_w2
-    fields. Particularly check that we only generate a single lookup.'''
+def test_multi_anyw2(tmpdir, dist_mem):
+    ''' Check generated code works correctly when we have multiple any_w2
+    fields. Particularly check that we only generate a single lookup. '''
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "21.1_single_invoke_multi_anyw2.f90"),
         api=TEST_API)
-    for dist_mem in [False, True]:
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        generated_code = str(psy.gen)
-        if dist_mem:
-            output = (
-                "      ! Look-up dofmaps for each function space\n"
-                "      !\n"
-                "      map_any_w2 => f1_proxy%vspace%get_whole_dofmap()\n"
-                "      !\n"
-                "      ! Initialise number of DoFs "
-                "for any_w2\n"
-                "      !\n"
-                "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
-                "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
-                "      !\n"
-                "      ! Call kernels and communication routines\n"
-                "      !\n"
-                "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
-                "        CALL f2_proxy%halo_exchange(depth=1)\n"
-                "      END IF \n"
-                "      !\n"
-                "      IF (f3_proxy%is_dirty(depth=1)) THEN\n"
-                "        CALL f3_proxy%halo_exchange(depth=1)\n"
-                "      END IF \n"
-                "      !\n"
-                "      DO cell=1,mesh%get_last_halo_cell(1)\n"
-                "        !\n"
-                "        CALL testkern_multi_anyw2_code(nlayers, "
-                "f1_proxy%data, f2_proxy%data, f3_proxy%data, ndf_any_w2, "
-                "undf_any_w2, map_any_w2(:,cell))\n"
-                "      END DO \n"
-                "      !\n"
-                "      ! Set halos dirty/clean for fields modified in the "
-                "above loop\n"
-                "      !\n"
-                "      CALL f1_proxy%set_dirty()")
-            assert output in generated_code
-        else:
-            output = (
-                "      ! Look-up dofmaps for each function space\n"
-                "      !\n"
-                "      map_any_w2 => f1_proxy%vspace%get_whole_dofmap()\n"
-                "      !\n"
-                "      ! Initialise number of DoFs for "
-                "any_w2\n"
-                "      !\n"
-                "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
-                "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
-                "      !\n"
-                "      ! Call our kernels\n"
-                "      !\n"
-                "      DO cell=1,f1_proxy%vspace%get_ncell()\n"
-                "        !\n"
-                "        CALL testkern_multi_anyw2_code(nlayers, "
-                "f1_proxy%data, f2_proxy%data, f3_proxy%data, ndf_any_w2, "
-                "undf_any_w2, map_any_w2(:,cell))\n"
-                "      END DO ")
-            assert output in generated_code
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    if dist_mem:
+        output = (
+            "      ! Look-up dofmaps for each function space\n"
+            "      !\n"
+            "      map_any_w2 => f1_proxy%vspace%get_whole_dofmap()\n"
+            "      !\n"
+            "      ! Initialise number of DoFs for any_w2\n"
+            "      !\n"
+            "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
+            "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
+            "      !\n"
+            "      ! Call kernels and communication routines\n"
+            "      !\n"
+            "      IF (f1_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f1_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f2_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      IF (f3_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f3_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      DO cell=1,mesh%get_last_halo_cell(1)\n"
+            "        !\n"
+            "        CALL testkern_multi_anyw2_code(nlayers, "
+            "f1_proxy%data, f2_proxy%data, f3_proxy%data, ndf_any_w2, "
+            "undf_any_w2, map_any_w2(:,cell))\n"
+            "      END DO \n"
+            "      !\n"
+            "      ! Set halos dirty/clean for fields modified in the "
+            "above loop\n"
+            "      !\n"
+            "      CALL f1_proxy%set_dirty()")
+        assert output in generated_code
+    else:
+        output = (
+            "      ! Look-up dofmaps for each function space\n"
+            "      !\n"
+            "      map_any_w2 => f1_proxy%vspace%get_whole_dofmap()\n"
+            "      !\n"
+            "      ! Initialise number of DoFs for "
+            "any_w2\n"
+            "      !\n"
+            "      ndf_any_w2 = f1_proxy%vspace%get_ndf()\n"
+            "      undf_any_w2 = f1_proxy%vspace%get_undf()\n"
+            "      !\n"
+            "      ! Call our kernels\n"
+            "      !\n"
+            "      DO cell=1,f1_proxy%vspace%get_ncell()\n"
+            "        !\n"
+            "        CALL testkern_multi_anyw2_code(nlayers, "
+            "f1_proxy%data, f2_proxy%data, f3_proxy%data, ndf_any_w2, "
+            "undf_any_w2, map_any_w2(:,cell))\n"
+            "      END DO ")
+        assert output in generated_code
 
 
-def test_anyw2_vectors():
-    '''Check generated code works correctly when we have any_w2 field
-    vectors'''
+def test_anyw2_vectors(tmpdir, dist_mem):
+    ''' Check generated code works correctly when we have any_w2 field
+    vectors '''
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "21.3_single_invoke_anyw2_vector.f90"),
         api=TEST_API)
-    for dist_mem in [False, True]:
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        generated_code = str(psy.gen)
-        assert "f3_proxy(1) = f3(1)%get_proxy()" in generated_code
-        assert "f3_proxy(2) = f3(2)%get_proxy()" in generated_code
-        assert "f3_proxy(1)%data, f3_proxy(2)%data" in generated_code
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    assert "f3_proxy(1) = f3(1)%get_proxy()" in generated_code
+    assert "f3_proxy(2) = f3(2)%get_proxy()" in generated_code
+    assert "f3_proxy(1)%data, f3_proxy(2)%data" in generated_code
 
 
 def test_anyw2_operators():
@@ -5264,25 +5271,27 @@ def test_anyw2_operators():
         assert output in generated_code
 
 
-def test_anyw2_stencils():
-    '''Check generated code works correctly when we have any_w2 fields
-    with stencils'''
+def test_anyw2_stencils(tmpdir, dist_mem):
+    ''' Check generated code works correctly when we have any_w2 fields
+    with stencils '''
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "21.5_single_invoke_anyw2_stencil.f90"),
         api=TEST_API)
-    for dist_mem in [False, True]:
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        generated_code = str(psy.gen)
-        output = (
-            "      ! Initialise stencil dofmaps\n"
-            "      !\n"
-            "      f2_stencil_map => f2_proxy%vspace%get_stencil_dofmap"
-            "(STENCIL_CROSS,extent)\n"
-            "      f2_stencil_dofmap => f2_stencil_map%get_whole_dofmap()\n"
-            "      f2_stencil_size = f2_stencil_map%get_size()\n"
-            "      !\n")
-        assert output in generated_code
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    output = (
+        "      ! Initialise stencil dofmaps\n"
+        "      !\n"
+        "      f2_stencil_map => f2_proxy%vspace%get_stencil_dofmap"
+        "(STENCIL_CROSS,extent)\n"
+        "      f2_stencil_dofmap => f2_stencil_map%get_whole_dofmap()\n"
+        "      f2_stencil_size = f2_stencil_map%get_size()\n"
+        "      !\n")
+    assert output in generated_code
 
 
 def test_no_halo_for_discontinous(tmpdir):

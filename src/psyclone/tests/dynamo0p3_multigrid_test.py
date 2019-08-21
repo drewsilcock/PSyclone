@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # BSD 3-Clause License
 #
-# Copyright (c) 2017-2018, Science and Technology Facilities Council
+# Copyright (c) 2017-2019, Science and Technology Facilities Council
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 # Authors R. W. Ford and A. R. Porter, STFC Daresbury Lab
+# Modified I. Kavcic, Met Office
 
 ''' This module contains tests for the multi-grid part of the Dynamo 0.3 API
     using pytest. '''
@@ -583,16 +584,16 @@ def test_fine_halo_read():
     assert hra._var_depth == "2*my_depth"
 
 
-def test_prolong_with_gp_error():
+def test_intergrid_with_gp_error():
     ''' Check that we reject an invoke that contains both
-    an inter-grid and a general-purpose kernel '''
+    an inter-grid (restrict) and a general-purpose kernel '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
                                         "22.3_intergrid_plus_general.f90"),
                            api=API)
     from psyclone.psyGen import GenerationError
     with pytest.raises(GenerationError) as err:
         _ = PSyFactory(API).create(invoke_info)
-    assert ("no other kernel types but kernels 'testkern_code_w2_only' in "
+    assert ("no other kernel types but kernels 'testkern_w2_only_code' in "
             "invoke 'invoke_0' are not inter-grid" in str(err))
 
 

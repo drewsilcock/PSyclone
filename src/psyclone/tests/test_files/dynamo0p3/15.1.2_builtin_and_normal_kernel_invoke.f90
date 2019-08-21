@@ -1,7 +1,7 @@
 ! -----------------------------------------------------------------------------
 ! BSD 3-Clause License
 !
-! Copyright (c) 2017-2018, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
 ! All rights reserved.
 !
 ! Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,25 @@
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
 ! Author R. W. Ford, STFC Daresbury Lab
-! Modified I. Kavcic Met Office
+! Modified I. Kavcic, Met Office
 
 program single_invoke_builtin_then_kernel
 
   ! Description: single invoke call with a builtin followed by a kernel call
-  use testkern,            only: testkern_type
-  use testkern_wtheta_mod, only: testkern_wtheta_type
-  use testkern_w2_only,    only: testkern_w2_only_type
-  use inf,                 only: field_type
+  use testkern,             only: testkern_type
+  use testkern_wtheta_mod,  only: testkern_wtheta_type
+  use testkern_w2_only_mod, only: testkern_w2_only_type
+  use inf,                  only: field_type
+
   implicit none
+
   type(field_type) :: f1, f2, f3, f4
-  real(r_def) :: scalar = 0.0
+  real(r_def)      :: scalar = 0.0
   
   call invoke(                               &
        setval_c(f5, 0.0),                    &
        setval_c(f2, 0.0),                    &
-       ! f3 function space w2, write
+       ! f3 function space w2, inc
        ! f2 function space w2, read
        testkern_w2_only_type(f3, f2),        &
        ! f4 function space wtheta, write

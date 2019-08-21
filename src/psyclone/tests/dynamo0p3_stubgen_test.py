@@ -268,14 +268,14 @@ def test_stub_generate_with_scalar_sums():
 INTENT = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
-     type(arg_type), meta_args(3) =    &
-          (/ arg_type(gh_field,gh_write,w1), &
-             arg_type(gh_field,gh_inc, w1), &
-             arg_type(gh_field,gh_read, w1)  &
+     type(arg_type), meta_args(3) =           &
+          (/ arg_type(gh_field, gh_inc,  w1), &
+             arg_type(gh_field, gh_inc,  w1), &
+             arg_type(gh_field, gh_read, w1)  &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy_code
+     procedure, nopass :: code => dummy_code
   end type dummy_type
 contains
   subroutine dummy_code()
@@ -317,7 +317,7 @@ def test_intent():
         "      INTEGER, intent(in) :: ndf_w1\n"
         "      INTEGER, intent(in), dimension(ndf_w1) :: map_w1\n"
         "      INTEGER, intent(in) :: undf_w1\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w1) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w1) :: "
         "field_1_w1\n"
         "      REAL(KIND=r_def), intent(inout), dimension(undf_w1) :: "
         "field_2_w1\n"
@@ -332,18 +332,18 @@ def test_intent():
 SPACES = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
-     type(arg_type), meta_args(7) =               &
-          (/ arg_type(gh_field,gh_write, w0),     &
-             arg_type(gh_field,gh_write, w1),     &
-             arg_type(gh_field,gh_write, w2),     &
-             arg_type(gh_field,gh_write, w3),     &
-             arg_type(gh_field,gh_write, wtheta), &
-             arg_type(gh_field,gh_write, w2h),    &
-             arg_type(gh_field,gh_write, w2v)     &
+     type(arg_type), meta_args(7) =                &
+          (/ arg_type(gh_field, gh_inc,   w0),     &
+             arg_type(gh_field, gh_inc,   w1),     &
+             arg_type(gh_field, gh_inc,   w2),     &
+             arg_type(gh_field, gh_write, w3),     &
+             arg_type(gh_field, gh_write, wtheta), &
+             arg_type(gh_field, gh_inc,   w2h),    &
+             arg_type(gh_field, gh_write, w2v)     &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy_code
+     procedure, nopass :: code => dummy_code
   end type dummy_type
 contains
   subroutine dummy_code()
@@ -388,17 +388,17 @@ def test_spaces():
         "      INTEGER, intent(in), dimension(ndf_wtheta) :: map_wtheta\n"
         "      INTEGER, intent(in) :: undf_w0, undf_w1, undf_w2, undf_w3, "
         "undf_wtheta, undf_w2h, undf_w2v\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w1) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w1) :: "
         "field_2_w1\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w2) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w2) :: "
         "field_3_w2\n"
         "      REAL(KIND=r_def), intent(out), dimension(undf_w3) :: "
         "field_4_w3\n"
         "      REAL(KIND=r_def), intent(out), dimension(undf_wtheta) :: "
         "field_5_wtheta\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w2h) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w2h) :: "
         "field_6_w2h\n"
         "      REAL(KIND=r_def), intent(out), dimension(undf_w2v) :: "
         "field_7_w2v\n"
@@ -412,11 +412,11 @@ VECTORS = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
      type(arg_type), meta_args(1) =    &
-          (/ arg_type(gh_field*3,gh_write, w0) &
+          (/ arg_type(gh_field*3, gh_inc, w0) &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy_code
+     procedure, nopass :: code => dummy_code
   end type dummy_type
 contains
   subroutine dummy_code()
@@ -444,11 +444,11 @@ def test_vectors():
         "      INTEGER, intent(in) :: ndf_w0\n"
         "      INTEGER, intent(in), dimension(ndf_w0) :: map_w0\n"
         "      INTEGER, intent(in) :: undf_w0\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0_v1\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0_v2\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0_v3\n"
         "    END SUBROUTINE dummy_code\n"
         "  END MODULE dummy_mod")
@@ -466,7 +466,7 @@ def test_arg_descriptor_vec_str():
     expected_output = (
         "DynArgDescriptor03 object\n"
         "  argument_type[0]='gh_field'*3\n"
-        "  access_descriptor[1]='gh_write'\n"
+        "  access_descriptor[1]='gh_inc'\n"
         "  function_space[2]='w0'")
     assert expected_output in result
 
@@ -485,7 +485,7 @@ ORIENTATION_OUTPUT = (
     "      INTEGER, intent(in) :: ndf_w2\n"
     "      INTEGER, intent(in), dimension(ndf_w2) :: map_w2\n"
     "      INTEGER, intent(in) :: undf_w0, ndf_w1, undf_w2, ndf_w3\n"
-    "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+    "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
     "field_1_w0\n"
     "      REAL(KIND=r_def), intent(in), dimension(undf_w2) :: "
     "field_3_w2\n"
@@ -596,12 +596,12 @@ def test_enforce_op_bc_kernel_stub_gen():
 SUB_NAME = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
-     type(arg_type), meta_args(1) =    &
-          (/ arg_type(gh_field,gh_write,w1) &
+     type(arg_type), meta_args(1) =         &
+          (/ arg_type(gh_field, gh_inc, w1) &
            /)
      integer, parameter :: iterates_over = cells
    contains
-     procedure() :: code => dummy
+     procedure, nopass :: code => dummy
   end type dummy_type
 contains
   subroutine dummy()
@@ -632,7 +632,7 @@ def test_sub_name():
         "      INTEGER, intent(in) :: ndf_w1\n"
         "      INTEGER, intent(in), dimension(ndf_w1) :: map_w1\n"
         "      INTEGER, intent(in) :: undf_w1\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w1) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w1) :: "
         "field_1_w1\n"
         "    END SUBROUTINE dummy_code\n"
         "  END MODULE dummy_mod")

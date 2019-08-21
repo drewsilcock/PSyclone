@@ -99,7 +99,7 @@ def test_multi_updated_arg():
     if it writes to more than one argument. (This used to be rejected.) '''
     fparser.logging.disable(fparser.logging.CRITICAL)
     # Change the access of the read-only argument
-    code = CODE.replace("GH_READ", "GH_WRITE", 1)
+    code = CODE.replace("GH_READ", "GH_INC", 1)
     ast = fpapi.parse(code, ignore_comments=False)
     dkm = DynKernMetadata(ast, name="testkern_eval_type")
     # Evaluator targets list remains unchanged
@@ -1300,23 +1300,23 @@ def test_eval_agglomerate(tmpdir):
 BASIS_EVAL = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
-     type(arg_type), meta_args(7) =                     &
-          (/ arg_type(gh_field,    gh_write, w0),       &
-             arg_type(gh_operator, gh_read,  w1, w1),   &
-             arg_type(gh_field,    gh_read,  w2),       &
-             arg_type(gh_operator, gh_read,  w3, w3),   &
-             arg_type(gh_field,    gh_read,  wtheta),   &
-             arg_type(gh_operator, gh_read,  w2h, w2h), &
-             arg_type(gh_field,    gh_read,  w2v)       &
+     type(arg_type), meta_args(7) =                    &
+          (/ arg_type(gh_field,    gh_inc,  w0),       &
+             arg_type(gh_operator, gh_read, w1, w1),   &
+             arg_type(gh_field,    gh_read, w2),       &
+             arg_type(gh_operator, gh_read, w3, w3),   &
+             arg_type(gh_field,    gh_read, wtheta),   &
+             arg_type(gh_operator, gh_read, w2h, w2h), &
+             arg_type(gh_field,    gh_read, w2v)       &
            /)
      type(func_type), meta_funcs(7) =     &
-          (/ func_type(w0, gh_basis),     &
-             func_type(w1, gh_basis),     &
-             func_type(w2, gh_basis),     &
-             func_type(w3, gh_basis),     &
+          (/ func_type(w0,     gh_basis), &
+             func_type(w1,     gh_basis), &
+             func_type(w2,     gh_basis), &
+             func_type(w3,     gh_basis), &
              func_type(wtheta, gh_basis), &
-             func_type(w2h, gh_basis),    &
-             func_type(w2v, gh_basis)     &
+             func_type(w2h,    gh_basis), &
+             func_type(w2v,    gh_basis)  &
            /)
      integer :: iterates_over = cells
      integer :: gh_shape = gh_evaluator
@@ -1360,7 +1360,7 @@ def test_basis_evaluator():
         "      INTEGER, intent(in), dimension(ndf_wtheta) :: map_wtheta\n"
         "      INTEGER, intent(in) :: undf_w0, ndf_w1, undf_w2, ndf_w3, "
         "undf_wtheta, ndf_w2h, undf_w2v\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0\n"
         "      REAL(KIND=r_def), intent(in), dimension(undf_w2) :: "
         "field_3_w2\n"
@@ -1400,7 +1400,7 @@ BASIS_UNSUPPORTED_SPACE = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
      type(arg_type), meta_args(1) =    &
-          (/ arg_type(gh_field,gh_write, any_space_1) &
+          (/ arg_type(gh_field, gh_inc, any_space_1) &
            /)
      type(func_type), meta_funcs(1) =    &
           (/ func_type(any_space_1, gh_basis) &
@@ -1434,7 +1434,7 @@ DIFF_BASIS = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
      type(arg_type), meta_args(7) =                         &
-          (/ arg_type(gh_field,    gh_write,     w0),       &
+          (/ arg_type(gh_field,    gh_inc,       w0),       &
              arg_type(gh_operator, gh_readwrite, w1, w1),   &
              arg_type(gh_field,    gh_read,      w2),       &
              arg_type(gh_operator, gh_write,     w3, w3),   &
@@ -1443,13 +1443,13 @@ module dummy_mod
              arg_type(gh_field,    gh_read,      w2v)       &
            /)
      type(func_type), meta_funcs(7) =          &
-          (/ func_type(w0, gh_diff_basis),     &
-             func_type(w1, gh_diff_basis),     &
-             func_type(w2, gh_diff_basis),     &
-             func_type(w3, gh_diff_basis),     &
+          (/ func_type(w0,     gh_diff_basis), &
+             func_type(w1,     gh_diff_basis), &
+             func_type(w2,     gh_diff_basis), &
+             func_type(w3,     gh_diff_basis), &
              func_type(wtheta, gh_diff_basis), &
-             func_type(w2h, gh_diff_basis),    &
-             func_type(w2v, gh_diff_basis)     &
+             func_type(w2h,    gh_diff_basis), &
+             func_type(w2v,    gh_diff_basis)  &
            /)
      integer :: iterates_over = cells
      integer :: gh_shape = gh_quadrature_XYoZ
@@ -1496,7 +1496,7 @@ def test_diff_basis():
         "      INTEGER, intent(in), dimension(ndf_wtheta) :: map_wtheta\n"
         "      INTEGER, intent(in) :: undf_w0, ndf_w1, undf_w2, ndf_w3, "
         "undf_wtheta, ndf_w2h, undf_w2v\n"
-        "      REAL(KIND=r_def), intent(out), dimension(undf_w0) :: "
+        "      REAL(KIND=r_def), intent(inout), dimension(undf_w0) :: "
         "field_1_w0\n"
         "      REAL(KIND=r_def), intent(in), dimension(undf_w2) :: "
         "field_3_w2\n"
@@ -1554,13 +1554,13 @@ module dummy_mod
              arg_type(gh_field,    gh_read,      w2v)       &
            /)
      type(func_type), meta_funcs(7) =          &
-          (/ func_type(w0, gh_diff_basis),     &
-             func_type(w1, gh_diff_basis),     &
-             func_type(w2, gh_diff_basis),     &
-             func_type(w3, gh_diff_basis),     &
+          (/ func_type(w0,     gh_diff_basis), &
+             func_type(w1,     gh_diff_basis), &
+             func_type(w2,     gh_diff_basis), &
+             func_type(w3,     gh_diff_basis), &
              func_type(wtheta, gh_diff_basis), &
-             func_type(w2h, gh_diff_basis),    &
-             func_type(w2v, gh_diff_basis)     &
+             func_type(w2h,    gh_diff_basis), &
+             func_type(w2v,    gh_diff_basis)  &
            /)
      integer :: iterates_over = cells
      integer :: gh_shape = gh_evaluator
@@ -1708,7 +1708,7 @@ DIFF_BASIS_UNSUPPORTED_SPACE = '''
 module dummy_mod
   type, extends(kernel_type) :: dummy_type
      type(arg_type), meta_args(1) =    &
-          (/ arg_type(gh_field,gh_write, any_space_1) &
+          (/ arg_type(gh_field, gh_inc, any_space_1) &
            /)
      type(func_type), meta_funcs(1) =    &
           (/ func_type(any_space_1, gh_diff_basis) &

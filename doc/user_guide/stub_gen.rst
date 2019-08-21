@@ -131,8 +131,8 @@ kernels can be used to generate kernel stub code (running stub
 generation from the ``<PSYCLONEHOME>/src/psyclone`` directory):
 ::
 
-    tests/test_files/dynamo0p3/testkern_chi_2.F90
-    tests/test_files/dynamo0p3/testkern_chi.F90
+    tests/test_files/dynamo0p3/testkern_chi_2_mod.f90
+    tests/test_files/dynamo0p3/testkern_chi_mod.f90
     tests/test_files/dynamo0p3/testkern_operator_mod.f90
     tests/test_files/dynamo0p3/testkern_operator_nofield_mod.f90
     tests/test_files/dynamo0p3/testkern_orientation.F90

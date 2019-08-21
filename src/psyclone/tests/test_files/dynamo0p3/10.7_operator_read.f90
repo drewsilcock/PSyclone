@@ -52,6 +52,6 @@ program operator_example
   mm_w0 = operator_type(fs%get_instance(W0),fs%get_instance(W0))
   qr => qr%get_instance(QR3,9,3)
 
-  call invoke(testkern_operator_type(mm_w0, chi, a, qr))
+  call invoke(testkern_operator_read_type(mm_w0, chi, a, qr))
 
 end program operator_example

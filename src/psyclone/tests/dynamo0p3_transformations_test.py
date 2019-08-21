@@ -4780,7 +4780,7 @@ def test_rc_vector_depth():
     invoke = psy.invokes.invoke_list[0]
     schedule = invoke.schedule
     rc_trans = Dynamo0p3RedundantComputationTrans()
-    loop = schedule.children[1]
+    loop = schedule.children[5]
     schedule, _ = rc_trans.apply(loop, depth=3)
     invoke.schedule = schedule
     result = str(psy.gen)
@@ -4806,7 +4806,7 @@ def test_rc_vector_no_depth():
     invoke = psy.invokes.invoke_list[0]
     schedule = invoke.schedule
     rc_trans = Dynamo0p3RedundantComputationTrans()
-    loop = schedule.children[1]
+    loop = schedule.children[5]
     schedule, _ = rc_trans.apply(loop)
     invoke.schedule = schedule
     result = str(psy.gen)

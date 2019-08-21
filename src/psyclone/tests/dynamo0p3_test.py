@@ -1267,13 +1267,15 @@ def test_no_vector_scalar():
             str(excinfo.value)
 
 
-def test_vector_field():
+def test_vector_field(tmpdir):
     ''' tests that a vector field is declared correctly in the PSy
     layer '''
     _, invoke_info = parse(os.path.join(BASE_PATH, "8_vector_field.f90"),
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
     assert ("SUBROUTINE invoke_0_testkern_chi_type(f1, chi, f2)" in
             generated_code)
@@ -1298,22 +1300,25 @@ def test_vector_field_2(tmpdir):
             generated_code)
 
 
-def test_vector_field_deref():
+def test_vector_field_deref(tmpdir, dist_mem):
     ''' tests that a vector field is declared correctly in the PSy
     layer when it is obtained by de-referencing a derived type in the
     Algorithm layer '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
                                         "8.1_vector_field_deref.f90"),
                            api=TEST_API)
-    for dist_mem in [True, False]:
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        generated_code = str(psy.gen)
-        assert ("SUBROUTINE invoke_0_testkern_chi_type(f1, box_chi, f2)" in
-                generated_code)
-        assert ("TYPE(field_type), intent(inout) :: f1, box_chi(3)" in
-                generated_code)
-        assert "TYPE(field_type), intent(in) :: f2" in generated_code
+
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    assert ("SUBROUTINE invoke_0_testkern_chi_type(f1, box_chi, f2)" in
+            generated_code)
+    assert ("TYPE(field_type), intent(inout) :: f1, box_chi(3)" in
+            generated_code)
+    assert "TYPE(field_type), intent(in) :: f2" in generated_code
 
 
 def test_orientation():
@@ -1825,7 +1830,7 @@ def test_multikernel_invoke_qr():
     assert str(generated_code).count("CALL testkern_qr_code") == 2
 
 
-def test_mkern_invoke_vec_fields():
+def test_mkern_invoke_vec_fields(tmpdir):
     ''' Test that correct code is produced when there are multiple
     kernels within an invoke with vector fields '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
@@ -1833,6 +1838,9 @@ def test_mkern_invoke_vec_fields():
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     generated_code = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
     # 1st test for duplication of name vector-field declaration
     assert ("TYPE(field_type), intent(inout) :: f1, chi(3), chi(3)"
             not in generated_code)
@@ -2857,7 +2865,7 @@ def test_halo_exchange_inc(monkeypatch, annexed):
         assert result.count("halo_exchange") == 7
 
 
-def test_no_halo_exchange_for_operator():
+def test_no_halo_exchange_for_operator(tmpdir):
     ''' Test that no halo exchange is generated before a kernel that reads
     from an operator '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
@@ -2865,6 +2873,9 @@ def test_no_halo_exchange_for_operator():
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     result = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
     # This kernel reads from an operator and a scalar and these
     # do not require halos to be updated.
     assert "halo_exchange" not in result

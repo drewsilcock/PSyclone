@@ -623,10 +623,10 @@ def test_operator_read_level1_halo():
     # Attempt to generate the code
     with pytest.raises(GenerationError) as excinfo:
         _ = psy.gen
-    assert ("Kernel 'testkern_operator_code' reads from an operator "
-            "and therefore cannot be used for cells beyond the level 1 "
-            "halo. However the containing loop goes out to level 2"
-            in str(excinfo))
+    assert ("Kernel 'testkern_operator_read_code' reads from an "
+            "operator and therefore cannot be used for cells beyond "
+            "the level 1 halo. However the containing loop goes out "
+            "to level 2" in str(excinfo))
 
 
 def test_operator_bc_kernel(tmpdir):

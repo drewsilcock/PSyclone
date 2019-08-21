@@ -189,7 +189,7 @@ module dynamo0p3_builtins_mod
   type, public, extends(kernel_type) :: X_minus_bY
      private
      type(arg_type) :: meta_args(4) = (/                              &
-          arg_type(GH_FIELD, GH_WRITE,  NY_SPACE_1),                  &
+          arg_type(GH_FIELD, GH_WRITE, ANY_SPACE_1),                  &
           arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1),                  &
           arg_type(GH_REAL,  GH_READ              ),                  &
           arg_type(GH_FIELD, GH_READ,  ANY_SPACE_1)                   &

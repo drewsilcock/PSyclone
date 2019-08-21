@@ -1,7 +1,8 @@
 ! -----------------------------------------------------------------------------
 ! BSD 3-Clause License
 !
-! Copyright (c) 2017, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
+! All rights reserved.
 !
 ! Redistribution and use in source and binary forms, with or without
 ! modification, are permitted provided that the following conditions are met:
@@ -30,27 +31,49 @@
 ! ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Authors R. W. Ford and A. R. Porter, STFC Daresbury Lab
+! Author R. W. Ford, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
-module testkern_w2_only
+module testkern_multi_anyw2_mod
+
+  use constants_mod
   use argument_mod
   use kernel_mod
-  use constants_mod
-  type, extends(kernel_type) :: testkern_w2_only_type
-     type(arg_type), dimension(2) :: meta_args =  (/  &
-             arg_type(gh_field,gh_write,w2), &
-             arg_type(gh_field,gh_read, w2)  &
-           /)
+
+  implicit none
+
+  type, public, extends(kernel_type) :: testkern_multi_anyw2_type
+     private
+     type(arg_type), dimension(3) :: meta_args = (/ &
+          arg_type(gh_field, gh_inc,  any_w2),      &
+          arg_type(gh_field, gh_read, any_w2),      &
+          arg_type(gh_field, gh_read, any_w2)       &
+          /)
      integer :: iterates_over = cells
    contains
-     procedure, nopass :: code => testkern_code_w2_only
-  end type testkern_w2_only_type
+     procedure, public, nopass :: code => testkern_multi_anyw2_code
+  end type testkern_multi_anyw2_type
+
 contains
 
-  subroutine testkern_code_w2_only(nlayers, fld1, fld2, ndf_w2, undf_w2, map_w2)
-    integer :: nlayers
-    real(kind=r_def), dimension(:) :: fld1, fld2
-    integer :: ndf_w2, undf_w2
-    integer, dimension(:) :: map_w2
-  end subroutine testkern_code_w2_only
-end module testkern_w2_only
+  subroutine testkern_multi_anyw2_code(nlayers,     &
+                                       fld1,        &
+                                       fld2,        &
+                                       fld3,        &
+                                       ndf_any_w2,  &
+                                       undf_any_w2, &
+                                       map_any_w2)
+
+    implicit none
+
+    integer(kind=i_def), intent(in) :: nlayers
+    integer(kind=i_def), intent(in) :: ndf_any_w2
+    integer(kind=i_def), intent(in) :: undf_any_w2
+    integer(kind=i_def), intent(in), dimension(ndf_any_w2) :: map_any_w2
+    real(kind=r_def), intent(out), dimension(undf_any_w2) :: fld1
+    real(kind=r_def), intent(in), dimension(undf_any_w2)  :: fld2
+    real(kind=r_def), intent(in), dimension(undf_any_w2)  :: fld3
+
+  end subroutine testkern_multi_anyw2_code
+
+end module testkern_multi_anyw2_mod

@@ -43,10 +43,10 @@ program single_invoke
   implicit none
 
   type(field_type) :: f1, f2, m1, m2
-  real(r_def) :: a
+  real(r_def)      :: a
 
-  call invoke(                      &
-       testkern_type(a,f1,f2,m1,m2) &
+  call invoke(                          &
+       testkern_type(a, f1, f2, m1, m2) &
           )
 
 end program single_invoke

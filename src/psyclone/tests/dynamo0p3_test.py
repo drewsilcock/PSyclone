@@ -625,6 +625,10 @@ def test_field_deref(tmpdir, dist_mem):
         output = (
             "      ! Call kernels and communication routines\n"
             "      !\n"
+            "      IF (f1_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f1_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
             "      IF (est_f2_proxy%is_dirty(depth=1)) THEN\n"
             "        CALL est_f2_proxy%halo_exchange(depth=1)\n"
             "      END IF \n"
@@ -886,6 +890,10 @@ def test_real_scalar(tmpdir):
         "      undf_w3 = m2_proxy%vspace%get_undf()\n"
         "      !\n"
         "      ! Call kernels and communication routines\n"
+        "      !\n"
+        "      IF (f1_proxy%is_dirty(depth=1)) THEN\n"
+        "        CALL f1_proxy%halo_exchange(depth=1)\n"
+        "      END IF \n"
         "      !\n"
         "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
         "        CALL f2_proxy%halo_exchange(depth=1)\n"
@@ -2050,7 +2058,7 @@ def test_kern_colourmap(monkeypatch):
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
-    kern = psy.invokes.invoke_list[0].schedule.children[3].loop_body[0]
+    kern = psy.invokes.invoke_list[0].schedule.children[4].loop_body[0]
     with pytest.raises(InternalError) as err:
         _ = kern.colourmap
     assert "Kernel 'testkern_code' is not inside a coloured loop" in str(err)
@@ -2067,7 +2075,7 @@ def test_kern_ncolours(monkeypatch):
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
-    kern = psy.invokes.invoke_list[0].schedule.children[3].loop_body[0]
+    kern = psy.invokes.invoke_list[0].schedule.children[4].loop_body[0]
     with pytest.raises(InternalError) as err:
         _ = kern.ncolours_var
     assert "Kernel 'testkern_code' is not inside a coloured loop" in str(err)
@@ -2079,7 +2087,7 @@ def test_kern_ncolours(monkeypatch):
             "been initialised" in str(err))
 
 
-def test_named_psy_routine(dist_mem):
+def test_named_psy_routine(tmpdir, dist_mem):
     ''' Check that we generate a subroutine with the expected name
     if an invoke is named '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
@@ -2090,6 +2098,8 @@ def test_named_psy_routine(dist_mem):
     gen_code = str(psy.gen)
     # Name should be all lower-case and with spaces replaced by underscores
     assert "SUBROUTINE invoke_important_invoke" in gen_code
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 # tests for dynamo0.3 stub generator
 
@@ -2370,28 +2380,27 @@ def test_arg_descriptor_funcs_method_error():
         'not get to here' in str(excinfo.value)
 
 
-def test_DynKernelArgument_intent_invalid():
+def test_DynKernelArgument_intent_invalid(dist_mem):
     '''Tests that an error is raised in DynKernelArgument when an invalid
     intent value is found. Tests with and without distributed memory '''
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api=TEST_API)
-    for dist_mem in [False, True]:
-        if dist_mem:
-            idx = 3
-        else:
-            idx = 0
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        invoke = psy.invokes.invoke_list[0]
-        schedule = invoke.schedule
-        loop = schedule.children[idx]
-        call = loop.loop_body[0]
-        arg = call.arguments.args[0]
-        arg._access = "invalid"
-        with pytest.raises(GenerationError) as excinfo:
-            _ = arg.intent
-        assert "Expecting argument access to be one of 'gh_read," in \
-            str(excinfo.value)
+    if dist_mem:
+        idx = 4
+    else:
+        idx = 0
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    invoke = psy.invokes.invoke_list[0]
+    schedule = invoke.schedule
+    loop = schedule.children[idx]
+    call = loop.loop_body[0]
+    arg = call.arguments.args[0]
+    arg._access = "invalid"
+    with pytest.raises(GenerationError) as excinfo:
+        _ = arg.intent
+    assert "Expecting argument access to be one of 'gh_read," in \
+        str(excinfo.value)
 
 
 def test_arg_ref_name_method_error1():
@@ -3211,7 +3220,7 @@ def test_lower_bound_fortran_2(monkeypatch):
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
-    my_loop = psy.invokes.invoke_list[0].schedule.children[3]
+    my_loop = psy.invokes.invoke_list[0].schedule.children[4]
     # we can not use the standard set_lower_bound function as that
     # checks for valid input
     monkeypatch.setattr(my_loop, "_lower_bound_name", value="invalid")
@@ -3264,7 +3273,7 @@ def test_upper_bound_inner(monkeypatch):
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
-    my_loop = psy.invokes.invoke_list[0].schedule.children[3]
+    my_loop = psy.invokes.invoke_list[0].schedule.children[4]
     monkeypatch.setattr(my_loop, "_upper_bound_name", value="inner")
     ubound = my_loop._upper_bound_fortran()
     assert ubound == "mesh%get_last_inner_cell(1)"
@@ -5015,80 +5024,78 @@ def test_itn_space_any_w1():
             assert output in generated_code
 
 
-def test_unexpected_type_error():
+def test_unexpected_type_error(dist_mem):
     '''Check that we raise an exception if an unexpected datatype is found
     when running the ArgOrdering generate method. As it is abstract we use
     the KernCallArgList sub class'''
-    for distmem in [False, True]:
-        _, invoke_info = parse(
-            os.path.join(BASE_PATH,
-                         "1.0.1_single_named_invoke.f90"),
-            api=TEST_API)
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=distmem).create(invoke_info)
-        schedule = psy.invokes.invoke_list[0].schedule
-        if distmem:
-            index = 3
-        else:
-            index = 0
-        loop = schedule.children[index]
-        kernel = loop.loop_body[0]
-        # sabotage one of the arguments to make it have an invalid type.
-        kernel.arguments.args[0]._type = "invalid"
-        # Now call KernCallArgList to raise an exception
-        create_arg_list = KernCallArgList(kernel)
-        with pytest.raises(GenerationError) as excinfo:
-            create_arg_list.generate()
-        assert (
-            "Unexpected arg type found in dynamo0p3.py:ArgOrdering:"
-            "generate()") in str(excinfo.value)
+    _, invoke_info = parse(
+        os.path.join(BASE_PATH,
+                     "1.0.1_single_named_invoke.f90"),
+        api=TEST_API)
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    schedule = psy.invokes.invoke_list[0].schedule
+    if dist_mem:
+        index = 4
+    else:
+        index = 0
+    loop = schedule.children[index]
+    kernel = loop.loop_body[0]
+    # Sabotage one of the arguments to make it have an invalid type.
+    kernel.arguments.args[0]._type = "invalid"
+    # Now call KernCallArgList to raise an exception
+    create_arg_list = KernCallArgList(kernel)
+    with pytest.raises(GenerationError) as excinfo:
+        create_arg_list.generate()
+    assert (
+        "Unexpected arg type found in dynamo0p3.py:ArgOrdering:"
+        "generate()") in str(excinfo.value)
 
 
-def test_argordering_exceptions():
+def test_argordering_exceptions(dist_mem):
     '''Check that we raise an exception if the abstract methods are called
     in an instance of the ArgOrdering class '''
-    for distmem in [False, True]:
-        _, invoke_info = parse(
-            os.path.join(BASE_PATH,
-                         "1.0.1_single_named_invoke.f90"),
-            api=TEST_API)
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=distmem).create(invoke_info)
-        schedule = psy.invokes.invoke_list[0].schedule
-        if distmem:
-            index = 3
-        else:
-            index = 0
-        loop = schedule.children[index]
-        kernel = loop.loop_body[0]
-        from psyclone.dynamo0p3 import ArgOrdering
-        create_arg_list = ArgOrdering(kernel)
-        for method in [create_arg_list.cell_map,
-                       create_arg_list.cell_position,
-                       create_arg_list.mesh_height,
-                       create_arg_list.mesh_ncell2d,
-                       create_arg_list.quad_rule]:
-            with pytest.raises(NotImplementedError):
-                method()
-        for method in [create_arg_list.field_vector,
-                       create_arg_list.field,
-                       create_arg_list.stencil_unknown_extent,
-                       create_arg_list.stencil_unknown_direction,
-                       create_arg_list.stencil,
-                       create_arg_list.operator,
-                       create_arg_list.scalar,
-                       create_arg_list.fs_common,
-                       create_arg_list.fs_compulsory_field,
-                       create_arg_list.basis,
-                       create_arg_list.diff_basis,
-                       create_arg_list.orientation,
-                       create_arg_list.field_bcs_kernel,
-                       create_arg_list.operator_bcs_kernel,
-                       create_arg_list.banded_dofmap,
-                       create_arg_list.indirection_dofmap,
-                       create_arg_list.cma_operator]:
-            with pytest.raises(NotImplementedError):
-                method(None)
+    _, invoke_info = parse(
+        os.path.join(BASE_PATH,
+                     "1.0.1_single_named_invoke.f90"),
+        api=TEST_API)
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    schedule = psy.invokes.invoke_list[0].schedule
+    if dist_mem:
+        index = 4
+    else:
+        index = 0
+    loop = schedule.children[index]
+    kernel = loop.loop_body[0]
+    from psyclone.dynamo0p3 import ArgOrdering
+    create_arg_list = ArgOrdering(kernel)
+    for method in [create_arg_list.cell_map,
+                   create_arg_list.cell_position,
+                   create_arg_list.mesh_height,
+                   create_arg_list.mesh_ncell2d,
+                   create_arg_list.quad_rule]:
+        with pytest.raises(NotImplementedError):
+            method()
+    for method in [create_arg_list.field_vector,
+                   create_arg_list.field,
+                   create_arg_list.stencil_unknown_extent,
+                   create_arg_list.stencil_unknown_direction,
+                   create_arg_list.stencil,
+                   create_arg_list.operator,
+                   create_arg_list.scalar,
+                   create_arg_list.fs_common,
+                   create_arg_list.fs_compulsory_field,
+                   create_arg_list.basis,
+                   create_arg_list.diff_basis,
+                   create_arg_list.orientation,
+                   create_arg_list.field_bcs_kernel,
+                   create_arg_list.operator_bcs_kernel,
+                   create_arg_list.banded_dofmap,
+                   create_arg_list.indirection_dofmap,
+                   create_arg_list.cma_operator]:
+        with pytest.raises(NotImplementedError):
+            method(None)
 
 
 def test_kernel_args_has_op():
@@ -5120,7 +5127,7 @@ def test_kerncallarglist_args_error(dist_mem):
                      distributed_memory=dist_mem).create(invoke_info)
     schedule = psy.invokes.invoke_list[0].schedule
     if dist_mem:
-        loop = schedule.children[3]
+        loop = schedule.children[4]
     else:
         loop = schedule.children[0]
     create_arg_list = KernCallArgList(loop.loop_body[0])
@@ -5438,7 +5445,11 @@ def test_arg_discontinuous(monkeypatch, annexed):
                     api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(info)
     schedule = psy.invokes.invoke_list[0].schedule
-    kernel = schedule.children[3].loop_body[0]
+    if annexed:
+        index = 3
+    else:
+        index = 4
+    kernel = schedule.children[index].loop_body[0]
     field = kernel.arguments.args[1]
     assert field.space == 'w1'
     assert not field.discontinuous
@@ -5984,7 +5995,7 @@ def test_kerncallarglist_positions_noquad(dist_mem):
     schedule = psy.invokes.invoke_list[0].schedule
     index = 0
     if dist_mem:
-        index = 3
+        index = 4
     loop = schedule.children[index]
     kernel = loop.loop_body[0]
     create_arg_list = KernCallArgList(kernel)

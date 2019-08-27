@@ -32,6 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 # Authors: J. Henrichs, Bureau of Meteorology
+# Modified I. Kavcic, Met Office
 
 
 ''' Module containing py.test tests for dependency analysis.'''
@@ -296,7 +297,7 @@ def test_goloop_partially():
 
 
 def test_dynamo():
-    '''Test the handling of a dynamo0.3 loop. Note that the variable accesses
+    '''Test the handling of a Dynamo0.3 loop. Note that the variable accesses
     are reported based on the user's point of view, not the code actually
     created by PSyclone, e.g. it shows a dependency on 'some_field', but not
     on some_field_proxy etc. Also the dependency is at this stage taken
@@ -313,8 +314,8 @@ def test_dynamo():
 
     var_accesses = VariablesAccessInfo()
     schedule.reference_accesses(var_accesses)
-    assert str(var_accesses) == "a: READ, cell: READ+WRITE, f1: WRITE, "\
-        "f2: READ, m1: READ, m2: READ"
+    assert str(var_accesses) == "a: READ, cell: READ+WRITE, "\
+        "f1: READ+WRITE, f2: READ, m1: READ, m2: READ"
 
 
 def test_location(parser):

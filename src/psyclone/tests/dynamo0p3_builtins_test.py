@@ -2360,7 +2360,7 @@ def test_multiple_builtin_set(monkeypatch, annexed, dist_mem):
         assert output_dm_2 in code
 
 
-def test_builtin_set_plus_normal(monkeypatch, annexed, dist_mem):
+def test_builtin_set_plus_normal(tmpdir, monkeypatch, annexed, dist_mem):
     '''Tests that we generate correct code for a builtin set operation
     when the invoke also contains a normal kernel. Test with and
     without annexed dofs being computed as this affects the generated
@@ -2377,6 +2377,8 @@ def test_builtin_set_plus_normal(monkeypatch, annexed, dist_mem):
     psy = PSyFactory(API, distributed_memory=dist_mem).create(invoke_info)
     code = str(psy.gen)
     print(code)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
     dofmap_output = (
         "      !\n"
@@ -2416,7 +2418,28 @@ def test_builtin_set_plus_normal(monkeypatch, annexed, dist_mem):
         assert output in code
     if dist_mem:
         mesh_code_present("f1", code)
-        output_dm_2 = (
+        # If annexed dofs are not computed there is a halo exchange for
+        # f1 (gh_inc access)
+        output_dm_haloex_owned = (
+            "      ! Call kernels and communication routines\n"
+            "      !\n"
+            "      IF (f1_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f1_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL f2_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      IF (m1_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL m1_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n"
+            "      !\n"
+            "      IF (m2_proxy%is_dirty(depth=1)) THEN\n"
+            "        CALL m2_proxy%halo_exchange(depth=1)\n"
+            "      END IF \n")
+        # Computing annexed dofs removes the halo exchange for f1
+        output_dm_haloex_annexed = (
             "      ! Call kernels and communication routines\n"
             "      !\n"
             "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
@@ -2429,8 +2452,8 @@ def test_builtin_set_plus_normal(monkeypatch, annexed, dist_mem):
             "      !\n"
             "      IF (m2_proxy%is_dirty(depth=1)) THEN\n"
             "        CALL m2_proxy%halo_exchange(depth=1)\n"
-            "      END IF \n"
-            "      !\n"
+            "      END IF \n")
+        output_dm_call_annexed = (
             "      DO cell=1,mesh%get_last_halo_cell(1)\n"
             "        !\n"
             "        CALL testkern_code(nlayers, ginger, f1_proxy%data, "
@@ -2454,9 +2477,13 @@ def test_builtin_set_plus_normal(monkeypatch, annexed, dist_mem):
             "      CALL f1_proxy%set_dirty()\n"
             "      !\n")
         if not annexed:
-            output_dm_2 = output_dm_2.replace("dof_annexed", "dof_owned")
-        print(output_dm_2)
-        assert output_dm_2 in code
+            assert output_dm_haloex_owned in code
+            output_dm_call_owned = output_dm_call_annexed.replace(
+                "dof_annexed", "dof_owned")
+            assert output_dm_call_owned in code
+        else:
+            assert output_dm_haloex_annexed in code
+            assert output_dm_call_annexed in code
 
 
 # ------------- Builtins with reductions ------------------------------------ #

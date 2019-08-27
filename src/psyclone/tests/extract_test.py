@@ -123,13 +123,13 @@ def test_distmem_error():
     schedule = invoke.schedule
     # Try applying Extract transformation
     with pytest.raises(TransformationError) as excinfo:
-        _, _ = etrans.apply(schedule.children[3])
+        _, _ = etrans.apply(schedule.children[4])
     assert ("Error in DynamoExtractRegionTrans: Distributed memory is "
             "not supported.") in str(excinfo.value)
 
     # Try applying Extract transformation to Node(s) containing HaloExchange
     with pytest.raises(TransformationError) as excinfo:
-        _, _ = etrans.apply(schedule.children[2:4])
+        _, _ = etrans.apply(schedule.children[3:5])
     assert ("Nodes of type '<class 'psyclone.dynamo0p3.DynHaloExchange'>' "
             "cannot be enclosed by a DynamoExtractRegionTrans "
             "transformation") in str(excinfo)
@@ -473,7 +473,7 @@ def test_node_list_dynamo0p3():
         "      END DO \n"
         "      DO cell=1,f3_proxy%vspace%get_ncell()\n"
         "        !\n"
-        "        CALL testkern_code_w2_only(nlayers, f3_proxy%data, "
+        "        CALL testkern_w2_only_code(nlayers, f3_proxy%data, "
         "f2_proxy%data, ndf_w2, undf_w2, map_w2(:,cell))\n"
         "      END DO \n"
         "      !\n"
@@ -660,7 +660,7 @@ def test_extract_kernel_and_builtin_dynamo0p3(tmpdir):
         "      END DO \n"
         "      DO cell=1,f3_proxy%vspace%get_ncell()\n"
         "        !\n"
-        "        CALL testkern_code_w2_only(nlayers, f3_proxy%data, "
+        "        CALL testkern_w2_only_code(nlayers, f3_proxy%data, "
         "f2_proxy%data, ndf_w2, undf_w2, map_w2(:,cell))\n"
         "      END DO \n"
         "      !\n"

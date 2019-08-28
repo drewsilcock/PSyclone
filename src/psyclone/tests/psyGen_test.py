@@ -67,6 +67,7 @@ from psyclone.transformations import OMPParallelLoopTrans, \
     DynamoLoopFuseTrans, Dynamo0p3RedundantComputationTrans
 from psyclone.generator import generate
 from psyclone.configuration import Config
+from dynamo0p3_build import Dynamo0p3Build
 
 BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "test_files", "dynamo0p3")
@@ -511,7 +512,7 @@ def test_same_name_invalid_array():
             "more than once") in str(excinfo.value)
 
 
-def test_derived_type_deref_naming():
+def test_derived_type_deref_naming(tmpdir):
     ''' Test that we do not get a name clash for dummy arguments in the PSy
     layer when the name generation for the component of a derived type
     may lead to a name already taken by another argument. '''
@@ -521,6 +522,9 @@ def test_derived_type_deref_naming():
     psy = PSyFactory("dynamo0.3", distributed_memory=True).create(invoke)
     generated_code = str(psy.gen)
     print(generated_code)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
     output = (
         "    SUBROUTINE invoke_0_testkern_type"
         "(a, f1_my_field, f1_my_field_1, m1, m2)\n"
@@ -932,8 +936,8 @@ def test_globalsum_view(capsys):
     assert colored("GlobalSum", SCHEDULE_COLOUR_MAP["GlobalSum"]) in ret_str
 
 
-def test_args_filter():
-    '''the args_filter() method is in both Loop() and Arguments() classes
+def test_args_filter(tmpdir):
+    ''' The args_filter() method is in both Loop() and Arguments() classes
     with the former method calling the latter. This example tests the
     case when unique is set to True and therefore any replicated names
     are not returned. The simplest way to do this is to use a
@@ -943,12 +947,15 @@ def test_args_filter():
                            api="dynamo0.3")
     psy = PSyFactory("dynamo0.3",
                      distributed_memory=False).create(invoke_info)
-    # fuse our loops so we have more than one Kernel in a loop
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    # Fuse our loops so we have more than one Kernel in a loop
     schedule = psy.invokes.invoke_list[0].schedule
     ftrans = DynamoLoopFuseTrans()
     schedule, _ = ftrans.apply(schedule.children[0],
                                schedule.children[1])
-    # get our loop and call our method ...
+    # Get our loop and call our method ...
     loop = schedule.children[0]
     args = loop.args_filter(unique=True)
     expected_output = ["a", "f1", "f2", "m1", "m2", "f3"]

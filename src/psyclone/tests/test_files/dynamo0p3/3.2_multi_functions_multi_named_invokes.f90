@@ -32,31 +32,34 @@
 ! POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
 ! Author R. W. Ford, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
 program multi_functions_multi_invokes
 
   ! Description: multiple invoke calls, each with a single function
-  use testkern, only: testkern_type
+  use testkern,    only: testkern_type
   use testkern_qr, only: testkern_qr_type
-  use inf,      only: field_type
-  implicit none
-  type(field_type) :: f1, f2, m1, m2
-  type(quadrature_rule_type) :: qr
-  real(r_def) :: a
-  integer :: istp
+  use inf,         only: field_type
 
-  call invoke(                                 &
-       name="my first",                        &
-       testkern_type(a,f1,f2,m1,m2),           &
-       testkern_type(a,f1,f2,m1,m2),           &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr) &
+  implicit none
+
+  type(field_type)           :: f1, f2, m1, m2
+  type(quadrature_rule_type) :: qr
+  real(r_def)                :: a
+  integer(i_def)             :: istp
+
+  call invoke(                                        &
+       name = "my first",                             &
+       testkern_type(a, f1, f2, m1, m2),              &
+       testkern_type(a, f1, f2, m1, m2),              &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr)  &
        )
 
-  call invoke(                                  &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr), &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr), &
-       name="my second",                        &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr)  &
+  call invoke(                                        &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr), &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr), &
+       name = "my second",                            &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr)  &
        )
 
 end program multi_functions_multi_invokes

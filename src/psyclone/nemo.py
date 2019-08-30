@@ -352,6 +352,7 @@ class NemoKern(CodedKern):
         self._ast = parse_tree
         # Create a kernel schedule
         self._kern_schedule = KernelSchedule(self._name)
+        self._kern_schedule._parent = self
         # Attach the PSyIR sub-tree to it
         self._kern_schedule.children = psyir_nodes[:]
         # Update the parent info for each node we've moved

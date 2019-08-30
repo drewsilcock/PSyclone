@@ -2507,10 +2507,19 @@ class OMPParallelDirective(OMPDirective):
             if len(accesses) == 1:
                 continue
 
-            # We have at least two accesses. If the first one is a write,
-            # assume the variable should be private:
+            # We have at least two accesses. If the first one is a write inside
+            # a parallel loop, consider this to be a private variable:
             if accesses[0].access_type == AccessType.WRITE:
-                result.add(var_name.lower())
+                node = accesses[0].node
+                # Find if this node is part of a omp parallel do or omp do
+                # directive:
+                while node and node != self and \
+                        not isinstance(node, (OMPParallelDoDirective,
+                                              OMPDoDirective)):
+                    node = node.parent
+
+                if isinstance(node, (OMPParallelDoDirective, OMPDoDirective)):
+                    result.add(var_name.lower())
 
         # Convert the set into a list and sort it, so that we get
         # reproducible results

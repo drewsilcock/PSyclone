@@ -29,21 +29,24 @@
 ! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ! -----------------------------------------------------------------------------
-! Authors: R. W. Ford and A. R. Porter, STFC Daresbury Lab
+! Authors R. W. Ford and A. R. Porter, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
 program multi_qr_per_invoke
 
   use testkern_qr, only: testkern_qr_type
+
   implicit none
+
   type(field_type)      :: f0, f1, f2, f3, f4
   type(quadrature_type) :: qr0, qr1
-  real                  :: ascalar
-  integer               :: iscalar
+  real(r_def)           :: ascalar
+  integer(i_def)        :: iscalar
 
-  call invoke(                                               &
-       testkern_qr_type(f1,f2,f3,ascalar,f4,iscalar,qr0),    &
-       testkern_qr_type(f1,f2,f3,ascalar,f4,iscalar,qr1),    &
-       testkern_qr_type(f0,f2,f3,ascalar,f4,iscalar,qr0) )
-
+  call invoke(                                                  &
+       testkern_qr_type(f1, f2, f3, ascalar, f4, iscalar, qr0), &
+       testkern_qr_type(f1, f2, f3, ascalar, f4, iscalar, qr1), &
+       testkern_qr_type(f0, f2, f3, ascalar, f4, iscalar, qr0)  &
+       )
 
 end program multi_qr_per_invoke

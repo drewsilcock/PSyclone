@@ -1,5 +1,5 @@
 !-------------------------------------------------------------------------------
-! Copyright (c) 2017, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
 ! 
 ! Redistribution and use in source and binary forms, with or without
 ! modification, are permitted provided that the following conditions are met:
@@ -25,24 +25,27 @@
 ! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 ! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-!
-! Author: A. R. Porter STFC Daresbury Lab
 !-------------------------------------------------------------------------------
+! Author A. R. Porter, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
+
 program qr_eval_invoke
 
   ! Test program containing a single invoke of two kernels, one
   ! requiring an evaluator and one quadrature.
   use testkern_eval, only: testkern_eval_type
-  use testkern_qr, only: testkern_qr_type
+  use testkern_qr,   only: testkern_qr_type
+
   implicit none
+
   type(field_type)      :: f0, f1, f2, m1, m2
   type(quadrature_rule) :: qr
-  real(r_def) :: a
-  integer :: istp
+  real(r_def)           :: a
+  integer(i_def)        :: istp
 
-  call invoke(                           &
-       testkern_eval_type(f0,f1),    &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr)   &
+  call invoke(                                       &
+       testkern_eval_type(f0, f1),                   &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr) &
        )
 
 end program qr_eval_invoke

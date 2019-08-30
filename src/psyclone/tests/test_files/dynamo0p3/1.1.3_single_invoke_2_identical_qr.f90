@@ -1,5 +1,5 @@
 !-------------------------------------------------------------------------------
-! Copyright (c) 2017, Science and Technology Facilities Council
+! Copyright (c) 2017-2019, Science and Technology Facilities Council
 ! 
 ! Redistribution and use in source and binary forms, with or without
 ! modification, are permitted provided that the following conditions are met:
@@ -25,26 +25,28 @@
 ! CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 ! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-!
-! Author: A. R. Porter STFC Daresbury Lab
 !-------------------------------------------------------------------------------
+! Author A. R. Porter, STFC Daresbury Lab
+! Modified I. Kavcic, Met Office
 
 program single_invoke
 
   ! Description: two functions specified in an invoke call, each requiring
-  ! the same qr.
+  ! the same quadrature.
   use testkern_qr, only: testkern_qr_type
   use field_mod,   only: field_type
-  implicit none
-  type(field_type) :: f1, f2, m1, m2
-  type(field_type) :: g1, g2, n1, n2
-  type(quadrature_rule) :: qr
-  real(r_def) :: a, b
-  integer :: istp
 
-  call invoke(                                    &
-       testkern_qr_type(f1,f2,m1,a,m2,istp,qr),   &
-       testkern_qr_type(g1,g2,n1,b,n2,istp,qr)   &
-          )
+  implicit none
+
+  type(field_type)      :: f1, f2, m1, m2
+  type(field_type)      :: g1, g2, n1, n2
+  type(quadrature_rule) :: qr
+  real(r_def)           :: a, b
+  integer(i_def)        :: istp
+
+  call invoke(                                        &
+       testkern_qr_type(f1, f2, m1, a, m2, istp, qr), &
+       testkern_qr_type(g1, g2, n1, b, n2, istp, qr)  &
+       )
 
 end program single_invoke

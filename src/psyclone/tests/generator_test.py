@@ -30,8 +30,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
-# Author R. Ford STFC Daresbury Lab
+# Author R. W. Ford, STFC Daresbury Lab
 # Modified work Copyright (c) 2018 by J. Henrichs, Bureau of Meteorology
+# Modified I. Kavcic, Met Office
 
 
 '''
@@ -304,7 +305,7 @@ def test_script_null_trans_relative():
 
 
 def test_script_trans():
-    ''' checks that generator.py works correctly when a
+    ''' Checks that generator.py works correctly when a
         transformation is provided as a script, i.e. it applies the
         transformations correctly. We use loop fusion as an
         example.'''
@@ -320,14 +321,12 @@ def test_script_trans():
     psy = PSyFactory("dynamo0.3", distributed_memory=True).create(invoke_info)
     invoke = psy.invokes.get("invoke_0")
     schedule = invoke.schedule
-    loop1 = schedule.children[3]
-    loop2 = schedule.children[4]
+    loop1 = schedule.children[4]
+    loop2 = schedule.children[5]
     trans = LoopFuseTrans()
-    schedule.view()
     schedule, _ = trans.apply(loop1, loop2)
     invoke.schedule = schedule
     generated_code_1 = psy.gen
-    schedule.view()
     # second loop fuse using generator.py and a script
     _, generated_code_2 = generate(parse_file, api="dynamo0.3",
                                    script_name=os.path.join(

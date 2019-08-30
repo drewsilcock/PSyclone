@@ -871,7 +871,7 @@ def test_multi_kernel_single_omp_region(dist_mem):
     schedule = invoke.schedule
 
     if dist_mem:
-        index = 3
+        index = 4
     else:
         index = 0
 
@@ -945,7 +945,7 @@ def test_multi_different_kernel_omp(
             index2 = 8
         else:
             index1 = 6
-            index2 = 9
+            index2 = 10
     else:
         index1 = 0
         index2 = 1
@@ -986,7 +986,6 @@ def test_loop_fuse_different_spaces(monkeypatch, dist_mem):
                          distributed_memory=dist_mem).create(info)
         invoke = psy.invokes.get('invoke_0')
         schedule = invoke.schedule
-
         ftrans = DynamoLoopFuseTrans()
         mtrans = MoveTrans()
         if dist_mem:
@@ -1020,8 +1019,7 @@ def test_loop_fuse_different_spaces(monkeypatch, dist_mem):
 
 def test_loop_fuse_unexpected_error(dist_mem):
     ''' Test that we catch an unexpected error when loop fusing. '''
-    _, info = parse(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 "test_files", "dynamo0p3",
+    _, info = parse(os.path.join(BASE_PATH,
                                  "4_multikernel_invokes.f90"),
                     api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=dist_mem).create(info)
@@ -1029,7 +1027,7 @@ def test_loop_fuse_unexpected_error(dist_mem):
     schedule = invoke.schedule
 
     if dist_mem:
-        index = 3
+        index = 4
     else:
         index = 0
 
@@ -1046,8 +1044,7 @@ def test_loop_fuse_unexpected_error(dist_mem):
 
 def test_loop_fuse(dist_mem):
     ''' Test that we are able to fuse two loops together. '''
-    _, info = parse(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 "test_files", "dynamo0p3",
+    _, info = parse(os.path.join(BASE_PATH,
                                  "4_multikernel_invokes.f90"),
                     api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=dist_mem).create(info)
@@ -1055,7 +1052,7 @@ def test_loop_fuse(dist_mem):
     schedule = invoke.schedule
 
     if dist_mem:
-        index = 3
+        index = 4
     else:
         index = 0
 
@@ -1095,8 +1092,7 @@ def test_loop_fuse(dist_mem):
 def test_loop_fuse_set_dirty():
     ''' Test that we are able to fuse two loops together and produce
     the expected set_dirty() calls. '''
-    _, info = parse(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 "test_files", "dynamo0p3",
+    _, info = parse(os.path.join(BASE_PATH,
                                  "4_multikernel_invokes.f90"),
                     api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(info)
@@ -1104,8 +1100,8 @@ def test_loop_fuse_set_dirty():
     schedule = invoke.schedule
     ftrans = DynamoLoopFuseTrans()
     # Fuse the loops
-    schedule, _ = ftrans.apply(schedule.children[3],
-                               schedule.children[4])
+    schedule, _ = ftrans.apply(schedule.children[4],
+                               schedule.children[5])
     schedule.view()
     gen = str(psy.gen)
     print(gen)
@@ -5923,26 +5919,30 @@ def test_loop_fuse_then_rc(tmpdir):
     ftrans = DynamoLoopFuseTrans()
 
     # fuse the loops
-    schedule, _ = ftrans.apply(schedule.children[3],
-                               schedule.children[4])
+    schedule, _ = ftrans.apply(schedule.children[4],
+                               schedule.children[5])
 
     # create our redundant computation transformation
     rc_trans = Dynamo0p3RedundantComputationTrans()
 
     # apply redundant computation to the loop
-    schedule, _ = rc_trans.apply(schedule.children[3])
+    schedule, _ = rc_trans.apply(schedule.children[4])
 
     # create our colour transformation
     ctrans = Dynamo0p3ColourTrans()
 
     # Colour the loop
-    schedule, _ = ctrans.apply(schedule.children[3])
+    schedule, _ = ctrans.apply(schedule.children[4])
 
     psy.invokes.invoke_list[0].schedule = schedule
 
     result = str(psy.gen)
 
     assert (
+        "      IF (f1_proxy%is_dirty(depth=mesh%get_halo_depth())) THEN\n"
+        "        CALL f1_proxy%halo_exchange(depth=mesh%get_halo_depth())\n"
+        "      END IF \n"
+        "      !\n"
         "      IF (f2_proxy%is_dirty(depth=mesh%get_halo_depth())) THEN\n"
         "        CALL f2_proxy%halo_exchange(depth=mesh%get_halo_depth())\n"
         "      END IF \n"

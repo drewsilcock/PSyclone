@@ -2025,8 +2025,8 @@ def test_loopfuse():
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     invoke = psy.invokes.get("invoke_0")
     schedule = invoke.schedule
-    loop1 = schedule.children[0]
-    loop2 = schedule.children[1]
+    loop1 = schedule.children[4]
+    loop2 = schedule.children[5]
     trans = LoopFuseTrans()
     schedule, _ = trans.apply(loop1, loop2)
     invoke.schedule = schedule
@@ -3279,20 +3279,22 @@ def test_upper_bound_inner(monkeypatch):
     assert ubound == "mesh%get_last_inner_cell(1)"
 
 
-def test_intent_multi_kern():
+def test_intent_multi_kern(tmpdir, dist_mem):
     ''' Test that we correctly generate argument declarations when the
     same fields are passed to different kernels with different intents '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
                                         "4.8_multikernel_invokes.f90"),
                            api=TEST_API)
-    for dist_mem in [False, True]:
-        psy = PSyFactory(TEST_API,
-                         distributed_memory=dist_mem).create(invoke_info)
-        output = str(psy.gen)
-        assert "TYPE(field_type), intent(inout) :: g, f\n" in output
-        assert "TYPE(field_type), intent(inout) :: b, h\n" in output
-        assert "TYPE(field_type), intent(in) :: c, d, a, e(3)\n" in output
-        assert "TYPE(quadrature_xyoz_type), intent(in) :: qr\n" in output
+    psy = PSyFactory(TEST_API,
+                     distributed_memory=dist_mem).create(invoke_info)
+    output = str(psy.gen)
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
+
+    assert "TYPE(field_type), intent(inout) :: g, f\n" in output
+    assert "TYPE(field_type), intent(inout) :: b, h\n" in output
+    assert "TYPE(field_type), intent(in) :: c, d, a, e(3)\n" in output
+    assert "TYPE(quadrature_xyoz_type), intent(in) :: qr\n" in output
 
 
 def test_field_gh_sum_invalid():

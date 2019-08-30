@@ -1068,7 +1068,7 @@ def test_invoke_name():
     assert "SUBROUTINE invoke_important_invoke" in gen
 
 
-def test_multi_kern_named_invoke():
+def test_multi_kern_named_invoke(tmpdir):
     ''' Check that specifying the name of an invoke containing multiple
     kernel invocations result in a correctly-named routine in the PSy layer '''
     _, invoke_info = parse(os.path.join(BASE_PATH,
@@ -1078,6 +1078,8 @@ def test_multi_kern_named_invoke():
     gen = str(psy.gen)
     print(gen)
     assert "SUBROUTINE invoke_some_name" in gen
+
+    assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
 
 def test_named_multi_invokes():

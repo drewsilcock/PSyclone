@@ -108,7 +108,7 @@ def test_colour_trans_declarations(tmpdir, dist_mem):
 
 
 def test_colour_trans(tmpdir, dist_mem):
-    '''test of the colouring transformation of a single loop. We test
+    ''' Test of the colouring transformation of a single loop. We test
     when distributed memory is both off and on. '''
     _, info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                     api=TEST_API)

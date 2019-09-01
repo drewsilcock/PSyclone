@@ -1281,7 +1281,7 @@ def test_no_vector_scalar():
 
 
 def test_vector_field(tmpdir):
-    ''' tests that a vector field is declared correctly in the PSy
+    ''' Tests that a vector field is declared correctly in the PSy
     layer '''
     _, invoke_info = parse(os.path.join(BASE_PATH, "8_vector_field.f90"),
                            api=TEST_API)
@@ -1314,7 +1314,7 @@ def test_vector_field_2(tmpdir):
 
 
 def test_vector_field_deref(tmpdir, dist_mem):
-    ''' tests that a vector field is declared correctly in the PSy
+    ''' Tests that a vector field is declared correctly in the PSy
     layer when it is obtained by de-referencing a derived type in the
     Algorithm layer '''
     _, invoke_info = parse(os.path.join(BASE_PATH,

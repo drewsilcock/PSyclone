@@ -3291,8 +3291,7 @@ def test_intent_multi_kern(tmpdir, dist_mem):
 
     assert Dynamo0p3Build(tmpdir).code_compiles(psy)
 
-    assert "TYPE(field_type), intent(inout) :: g, f\n" in output
-    assert "TYPE(field_type), intent(inout) :: b, h\n" in output
+    assert "TYPE(field_type), intent(inout) :: h, b, g, f\n" in output
     assert "TYPE(field_type), intent(in) :: c, d, a, e(3)\n" in output
     assert "TYPE(quadrature_xyoz_type), intent(in) :: qr\n" in output
 
@@ -5594,7 +5593,7 @@ def test_HaloReadAccess_field_in_call():
                            api=TEST_API)
     psy = PSyFactory(TEST_API, distributed_memory=True).create(invoke_info)
     schedule = psy.invokes.invoke_list[0].schedule
-    halo_exchange = schedule.children[0]
+    halo_exchange = schedule.children[1]
     field = halo_exchange.field
     with pytest.raises(GenerationError) as excinfo:
         _ = HaloReadAccess(field)
@@ -6024,7 +6023,7 @@ def test_kerncallarglist_positions_quad(dist_mem):
     schedule = psy.invokes.invoke_list[0].schedule
     index = 0
     if dist_mem:
-        index = 3
+        index = 4
     loop = schedule.children[index]
     kernel = loop.loop_body[0]
     create_arg_list = KernCallArgList(kernel)

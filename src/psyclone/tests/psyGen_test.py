@@ -807,8 +807,8 @@ def test_ompdo_constructor():
     assert len(ompdo.children) == 1
 
 
-def test_ompdo_directive_class_view(capsys):
-    '''tests the view method in the OMPDoDirective class. We create a
+def test_ompdo_directive_class_view(capsys, dist_mem):
+    ''' Tests the view method in the OMPDoDirective class. We create a
     sub-class object then call this method from it '''
     from psyclone.psyGen import colored, SCHEDULE_COLOUR_MAP
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
@@ -824,37 +824,36 @@ def test_ompdo_directive_class_view(capsys):
         {"current_class": Directive, "current_string": ""}]
     otrans = OMPParallelLoopTrans()
     for case in cases:
-        for dist_mem in [False, True]:
 
-            psy = PSyFactory("dynamo0.3", distributed_memory=dist_mem).\
-                create(invoke_info)
-            schedule = psy.invokes.invoke_list[0].schedule
+        psy = PSyFactory("dynamo0.3", distributed_memory=dist_mem).\
+            create(invoke_info)
+        schedule = psy.invokes.invoke_list[0].schedule
 
-            if dist_mem:
-                idx = 3
-            else:
-                idx = 0
+        if dist_mem:
+            idx = 4
+        else:
+            idx = 0
 
-            _, _ = otrans.apply(schedule.children[idx])
-            omp_parallel_loop = schedule.children[idx]
+        _, _ = otrans.apply(schedule.children[idx])
+        omp_parallel_loop = schedule.children[idx]
 
-            # call the OMPDirective view method
-            case["current_class"].view(omp_parallel_loop)
+        # Call the OMPDirective view method
+        case["current_class"].view(omp_parallel_loop)
 
-            out, _ = capsys.readouterr()
+        out, _ = capsys.readouterr()
 
-            directive = colored("Directive", SCHEDULE_COLOUR_MAP["Directive"])
-            literal = colored("Literal", SCHEDULE_COLOUR_MAP["Literal"])
-            loop = colored("Loop", SCHEDULE_COLOUR_MAP["Loop"])
-            sched = colored("Schedule", SCHEDULE_COLOUR_MAP["Schedule"])
-            kern = colored("CodedKern", SCHEDULE_COLOUR_MAP["CodedKern"])
+        directive = colored("Directive", SCHEDULE_COLOUR_MAP["Directive"])
+        literal = colored("Literal", SCHEDULE_COLOUR_MAP["Literal"])
+        loop = colored("Loop", SCHEDULE_COLOUR_MAP["Loop"])
+        sched = colored("Schedule", SCHEDULE_COLOUR_MAP["Schedule"])
+        kern = colored("CodedKern", SCHEDULE_COLOUR_MAP["CodedKern"])
 
-            expected_output = (
-                directive + case["current_string"] + "\n"
-                "    " + loop + "[type='', field_space='w1', it_space='cells',"
-                )
+        expected_output = (
+            directive + case["current_string"] + "\n"
+            "    " + loop + "[type='', field_space='w1', it_space='cells',"
+            )
 
-            assert expected_output in out
+        assert expected_output in out
 
 
 def test_acc_dir_view(capsys):
@@ -1015,24 +1014,23 @@ def test_reduction_var_error():
                 "'gh_integer']") in str(err)
 
 
-def test_reduction_sum_error():
+def test_reduction_sum_error(dist_mem):
     '''Check that we raise an exception if the reduction_sum_loop()
     method is provided with an incorrect type of argument'''
     _, invoke_info = parse(os.path.join(BASE_PATH, "1_single_invoke.f90"),
                            api="dynamo0.3")
-    for dist_mem in [False, True]:
-        psy = PSyFactory("dynamo0.3",
-                         distributed_memory=dist_mem).create(invoke_info)
-        schedule = psy.invokes.invoke_list[0].schedule
-        call = schedule.kernels()[0]
-        # args[1] is of type gh_field
-        # pylint: disable=protected-access
-        call._reduction_arg = call.arguments.args[1]
-        with pytest.raises(GenerationError) as err:
-            call.reduction_sum_loop(None)
-        assert (
-            "unsupported reduction access 'gh_write' found in DynBuiltin:"
-            "reduction_sum_loop(). Expected one of '['gh_sum']") in str(err)
+    psy = PSyFactory("dynamo0.3",
+                     distributed_memory=dist_mem).create(invoke_info)
+    schedule = psy.invokes.invoke_list[0].schedule
+    call = schedule.kernels()[0]
+    # args[1] is of type gh_field
+    # pylint: disable=protected-access
+    call._reduction_arg = call.arguments.args[1]
+    with pytest.raises(GenerationError) as err:
+        call.reduction_sum_loop(None)
+    assert (
+        "unsupported reduction access 'gh_inc' found in DynBuiltin:"
+        "reduction_sum_loop(). Expected one of '['gh_sum']") in str(err)
 
 
 def test_call_multi_reduction_error(monkeypatch):
@@ -1954,7 +1952,7 @@ def test_node_is_valid_location():
     assert "method must be one of" in str(excinfo.value)
     # 3: parents of node and new_node are not the same
     with pytest.raises(GenerationError) as excinfo:
-        node.is_valid_location(schedule.children[3].children[0])
+        node.is_valid_location(schedule.children[4].children[0])
     assert ("the node and the location do not have the same "
             "parent") in str(excinfo.value)
     # 4: positions are the same
@@ -2015,8 +2013,8 @@ def test_node_ancestor():
 
 
 def test_dag_names():
-    '''test that the dag_name method returns the correct value for the
-    node class and its specialisations'''
+    ''' Test that the dag_name method returns the correct value for the
+    node class and its specialisations '''
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "1_single_invoke.f90"),
         api="dynamo0.3")
@@ -2025,13 +2023,13 @@ def test_dag_names():
     schedule = invoke.schedule
     assert super(Schedule, schedule).dag_name == "node_0"
     assert schedule.dag_name == "schedule"
-    assert schedule.children[0].dag_name == "checkhaloexchange(f2)_0"
-    assert schedule.children[3].dag_name == "loop_4"
-    schedule.children[3].loop_type = "colour"
-    assert schedule.children[3].dag_name == "loop_[colour]_4"
+    assert schedule.children[0].dag_name == "checkhaloexchange(f1)_0"
+    assert schedule.children[4].dag_name == "loop_5"
+    schedule.children[4].loop_type = "colour"
+    assert schedule.children[4].dag_name == "loop_[colour]_5"
     schedule.children[3].loop_type = ""
-    assert (schedule.children[3].loop_body[0].dag_name ==
-            "kernel_testkern_code_9")
+    assert (schedule.children[4].loop_body[0].dag_name ==
+            "kernel_testkern_code_10")
     _, invoke_info = parse(
         os.path.join(BASE_PATH, "15.14.3_sum_setval_field_builtin.f90"),
         api="dynamo0.3")
@@ -2406,7 +2404,7 @@ def test_check_vect_hes_differ_wrong_argtype():
 
 
 def test_check_vec_hes_differ_diff_names():
-    '''when the check_vector_halos_differ method is called from a halo
+    ''' When the check_vector_halos_differ method is called from a halo
     exchange object the argument being passed should be a halo
     exchange with an argument having the same name as the local halo
     exchange argument name. If this is not the case an exception
@@ -2420,12 +2418,12 @@ def test_check_vec_hes_differ_diff_names():
                      distributed_memory=True).create(invoke_info)
     invoke = psy.invokes.invoke_list[0]
     schedule = invoke.schedule
-    halo_exchange = schedule.children[0]
-    # obtain another halo exchange object which has an argument with a
+    halo_exchange = schedule.children[1]
+    # Obtain another halo exchange object which has an argument with a
     # different name
-    different_halo_exchange = schedule.children[1]
+    different_halo_exchange = schedule.children[2]
     with pytest.raises(GenerationError) as excinfo:
-        # pass halo exchange with different name to the method
+        # Pass halo exchange with different name to the method
         halo_exchange.check_vector_halos_differ(different_halo_exchange)
     assert (
         "the halo exchange object passed to "

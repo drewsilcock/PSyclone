@@ -48,7 +48,7 @@ program single_invoke
   real(r_def)           :: a
   integer(i_def)        :: istp
 
-  call invoke(
+  call invoke(                                            &
        testkern_qr_type(f1, f2, m1, a, m2, istp, qr%data) &
        )
 

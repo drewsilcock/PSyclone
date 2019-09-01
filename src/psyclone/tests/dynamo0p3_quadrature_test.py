@@ -174,6 +174,10 @@ def test_field_xyoz(tmpdir):
         "      !\n"
         "      ! Call kernels and communication routines\n"
         "      !\n"
+        "      IF (f1_proxy%is_dirty(depth=1)) THEN\n"
+        "        CALL f1_proxy%halo_exchange(depth=1)\n"
+        "      END IF \n"
+        "      !\n"
         "      IF (f2_proxy%is_dirty(depth=1)) THEN\n"
         "        CALL f2_proxy%halo_exchange(depth=1)\n"
         "      END IF \n"
@@ -394,7 +398,7 @@ def test_dynkern_setup(monkeypatch):
     psy = PSyFactory(API, distributed_memory=True).create(invoke_info)
     # Get hold of a DynKern object
     schedule = psy.invokes.invoke_list[0].schedule
-    kern = schedule.children[3].loop_body[0]
+    kern = schedule.children[4].loop_body[0]
     # Monkeypatch a couple of __init__ routines so that we can get past
     # them in the _setup() routine.
     from psyclone.psyGen import CodedKern
